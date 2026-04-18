@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Football Play Tracker</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #dbe1ea;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
+      --amber: #d97706;
+      --amber-soft: #fef3c7;
+      --red: #dc2626;
+      --red-soft: #fee2e2;
+      --slate-soft: #eef2f7;
+      --shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { padding-bottom: 120px; }
+    button, input, textarea, select { font: inherit; }
+    .app { max-width: 760px; margin: 0 auto; padding: 12px; }
+    .card { background: var(--card); border-radius: 24px; box-shadow: var(--shadow); padding: 14px; margin-bottom: 12px; }
+    .title { font-size: 28px; font-weight: 800; line-height: 1.1; margin: 0; }
+    .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .stat { border-radius: 18px; padding: 12px; text-align: center; }
+    .stat .label { font-size: 12px; color: var(--muted); }
+    .stat .value { font-size: 28px; font-weight: 900; margin-top: 4px; }
+    .green-soft { background: var(--green-soft); }
+    .amber-soft { background: var(--amber-soft); }
+    .red-soft { background: var(--red-soft); }
+    .slate-soft { background: var(--slate-soft); }
+    .row { display: flex; gap: 8px; }
+    .row.wrap { flex-wrap: wrap; }
+    .row > * { min-width: 0; }
+    .grow { flex: 1; }
+    .label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .input, .textarea, .btn {
+      width: 100%; border: 1px solid var(--border); border-radius: 16px; background: #fff;
+      min-height: 48px; padding: 12px 14px;
+    }
+    .textarea { min-height: 160px; resize: vertical; }
+    .btn {
+      cursor: pointer; font-weight: 800; background: white; color: var(--text);
+      transition: transform .05s ease, opacity .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn.primary { background: var(--blue); color: white; border-color: var(--blue); }
+    .btn.primary:hover { background: var(--blue-dark); }
+    .btn.secondary { background: #fff; }
+    .btn.soft { background: var(--slate-soft); }
+    .btn.danger { background: var(--red); color: white; border-color: var(--red); }
+    .btn.success { background: var(--green); color: white; border-color: var(--green); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .teams { display: grid; gap: 8px; }
+    .team-card { border: 1px solid var(--border); border-radius: 18px; padding: 12px; background: white; }
+    .team-card.active { border-color: var(--blue); background: #eff6ff; }
+    .team-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+    .team-name { font-weight: 800; font-size: 18px; }
+    .tiny { font-size: 12px; color: var(--muted); }
+    .player-controls { display: grid; gap: 8px; }
+    .search { margin-bottom: 8px; }
+    .chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .chip { min-height: 42px; border-radius: 14px; }
+    .players { display: grid; gap: 10px; }
+    .player {
+      border: 1px solid var(--border); border-radius: 22px; background: white; padding: 14px;
+      display: grid; gap: 10px; cursor: pointer;
+    }
+    .player.selected { background: #ecfdf5; border-color: var(--green); }
+    .player.low { box-shadow: inset 0 0 0 2px #fecaca; }
+    .player-header { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .player-name { font-size: 22px; font-weight: 900; line-height: 1.05; }
+    .player-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .plays-wrap { text-align: right; }
+    .plays { font-size: 34px; font-weight: 900; line-height: 1; }
+    .plays.low-num { color: var(--red); }
+    .plays.ok { color: var(--green); }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 28px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800;
+    }
+    .badge.red { background: var(--red); color: white; }
+    .badge.green { background: var(--green); color: white; }
+    .badge.gray { background: var(--slate-soft); color: var(--text); }
+    .move-buttons { display: flex; gap: 6px; margin-left: auto; }
+    .mini-btn {
+      border: 1px solid var(--border); background: white; border-radius: 12px; width: 42px; height: 42px;
+      font-size: 18px; font-weight: 900; cursor: pointer;
+    }
+    .summary-list { display: grid; gap: 8px; }
+    .summary-item {
+      display: flex; justify-content: space-between; align-items: center;
+      border-radius: 16px; padding: 10px 12px; border: 1px solid #fecaca; background: #fef2f2;
+      font-weight: 700;
+    }
+    .field-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .field-pill { background: var(--slate-soft); border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 800; }
+    .sticky {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgba(255,255,255,.96);
+      backdrop-filter: blur(8px); border-top: 1px solid var(--border);
+    }
+    .sticky-inner { max-width: 760px; margin: 0 auto; padding: 10px 12px 14px; }
+    .snap-row { display: flex; gap: 8px; align-items: center; }
+    .snap-box { min-width: 92px; text-align: center; border-radius: 18px; padding: 10px; }
+    .snap-btn {
+      flex: 1; min-height: 68px; border-radius: 20px; border: none; font-size: 30px; font-weight: 900;
+      background: var(--blue); color: white; cursor: pointer; box-shadow: var(--shadow);
+    }
+    .snap-btn.ready { background: var(--green); }
+    .snap-btn:disabled { opacity: .45; }
+    .help { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .flash { animation: flash .18s ease; }
+    @keyframes flash { from { transform: scale(1); } 50% { transform: scale(1.02); } to { transform: scale(1); } }
+    .hidden { display: none !important; }
+
+    @media (min-width: 780px) {
+      .two-col { display: grid; grid-template-columns: 320px 1fr; gap: 12px; }
+      .chips { grid-template-columns: repeat(6, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <h1 class="title">Football Play Tracker</h1>
+      <div class="sub">Single-file mobile app with Google Sheet team import built for your 1/2, 3/4, and 5/6 rosters.</div>
+      <div class="grid3">
+        <div id="onFieldStat" class="stat amber-soft">
+          <div class="label">On Field</div>
+          <div id="onFieldValue" class="value">0/8</div>
+        </div>
+        <div class="stat slate-soft">
+          <div class="label">Snaps</div>
+          <div id="snapCountValue" class="value">0</div>
+        </div>
+        <div id="under5Stat" class="stat red-soft">
+          <div class="label">Under 5</div>
+          <div id="under5Value" class="value">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="label">Google Sheet Import</div>
+          <div class="tiny" style="margin-bottom:8px;">Your sheet is already wired in. When the sheet is published/shared correctly, tap the button below and it will load teams from the columns named 1/2, 3/4, and 5/6.</div>
+          <label class="label">Sheet ID</label>
+          <input id="sheetId" class="input" value="1BNuh-Zwd_4ZwAGnOCec9vdLIPxTz8qvnrXPnCSl2H9Q" />
+          <div style="height:8px"></div>
+          <label class="label">Worksheet gid</label>
+          <input id="sheetGid" class="input" value="0" />
+          <div class="row" style="margin-top:8px;">
+            <button id="loadSheetBtn" class="btn primary grow">Load Teams From Sheet</button>
+          </div>
+          <div id="sheetStatus" class="tiny" style="margin-top:8px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="label">Team Setup</div>
+          <label class="label">Team Name</label>
+          <input id="teamName" class="input" placeholder="1/2" />
+          <div style="height:8px"></div>
+          <label class="label">Players On Field</label>
+          <div class="tiny" style="margin-bottom:8px;">This auto-sets from team name. 1/2 = 8-man. 3/4 and 5/6 = 11-man.</div>
+          <input id="gameTypeDisplay" class="input" value="8-man" readonly />
+          <div style="height:8px"></div>
+          <label class="label">Roster</label>
+          <textarea id="rosterText" class="textarea" placeholder="Reid Grammer&#10;Kace Hilbert&#10;Urban Niemann"></textarea>
+          <div class="row wrap" style="margin-top:8px;">
+            <button id="loadRosterBtn" class="btn primary grow">Load Roster</button>
+            <button id="saveTeamBtn" class="btn soft grow">Save Team</button>
+          </div>
+          <div class="row wrap" style="margin-top:8px;">
+            <button id="startGameBtn" class="btn success grow">Start</button>
+            <button id="endGameBtn" class="btn danger grow">End</button>
+          </div>
+          <div class="row wrap" style="margin-top:8px;">
+            <button id="resetGameBtn" class="btn secondary grow">Reset Game</button>
+            <button id="autoSelectBtn" class="btn secondary grow">Auto-select Lowest</button>
+          </div>
+          <div class="row wrap" style="margin-top:8px;">
+            <button id="backupBtn" class="btn secondary grow">Backup</button>
+            <label class="btn secondary grow" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              Restore
+              <input id="restoreInput" type="file" accept="application/json" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label">Saved Teams</div>
+          <div id="savedTeams" class="teams"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="label">Players</div>
+          <div class="player-controls">
+            <input id="searchInput" class="input search" placeholder="Search player" />
+            <div class="chips">
+              <button class="btn chip primary" data-view="manual">Manual</button>
+              <button class="btn chip" data-view="selected">Selected</button>
+              <button class="btn chip" data-view="needs-plays">Need Plays</button>
+              <button class="btn chip" data-view="plays-low">Low</button>
+              <button class="btn chip" data-view="plays-high">High</button>
+              <button class="btn chip" data-view="name">Name</button>
+            </div>
+          </div>
+          <div style="height:10px"></div>
+          <div id="players" class="players"></div>
+        </div>
+
+        <div class="card">
+          <div class="label">Summary</div>
+          <div class="label" style="margin-bottom:8px;">Currently on the field</div>
+          <div id="selectedPlayers" class="field-list"></div>
+          <div style="height:12px"></div>
+          <div class="label" style="margin-bottom:8px;">Still needs snaps</div>
+          <div id="under5List" class="summary-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky">
+    <div class="sticky-inner">
+      <div class="snap-row">
+        <div id="stickyLeft" class="snap-box amber-soft">
+          <div class="label" style="margin:0; font-size:11px;">Selected</div>
+          <div id="stickySelected" style="font-size:28px; font-weight:900;">0/8</div>
+        </div>
+        <button id="snapBtn" class="snap-btn" disabled>SNAP +1</button>
+        <div id="stickyRight" class="snap-box red-soft">
+          <div class="label" style="margin:0; font-size:11px;">Under 5</div>
+          <div id="stickyUnder5" style="font-size:28px; font-weight:900;">0</div>
+        </div>
+      </div>
+      <div id="snapHelp" class="help">Start the game to enable snapping.</div>
+    </div>
+  </div>
+
+  <script>
+    const LIVE_KEY = 'youth-play-tracker-live-v3';
+    const TEAMS_KEY = 'youth-play-tracker-teams-v3';
+
+    const state = {
+      gameType: 8,
+      teamName: '',
+      rosterText: '',
+      players: [],
+      gameStarted: false,
+      gameEnded: false,
+      snapCount: 0,
+      viewMode: 'manual',
+      search: '',
+      activeTeamId: null,
+      savedTeams: [],
+    };
+
+    const el = {
+      sheetId: document.getElementById('sheetId'),
+      sheetGid: document.getElementById('sheetGid'),
+      sheetStatus: document.getElementById('sheetStatus'),
+      loadSheetBtn: document.getElementById('loadSheetBtn'),
+      teamName: document.getElementById('teamName'),
+      rosterText: document.getElementById('rosterText'),
+      gameTypeDisplay: document.getElementById('gameTypeDisplay'),
+      loadRosterBtn: document.getElementById('loadRosterBtn'),
+      saveTeamBtn: document.getElementById('saveTeamBtn'),
+      startGameBtn: document.getElementById('startGameBtn'),
+      endGameBtn: document.getElementById('endGameBtn'),
+      resetGameBtn: document.getElementById('resetGameBtn'),
+      autoSelectBtn: document.getElementById('autoSelectBtn'),
+      backupBtn: document.getElementById('backupBtn'),
+      restoreInput: document.getElementById('restoreInput'),
+      savedTeams: document.getElementById('savedTeams'),
+      searchInput: document.getElementById('searchInput'),
+      players: document.getElementById('players'),
+      selectedPlayers: document.getElementById('selectedPlayers'),
+      under5List: document.getElementById('under5List'),
+      onFieldStat: document.getElementById('onFieldStat'),
+      onFieldValue: document.getElementById('onFieldValue'),
+      snapCountValue: document.getElementById('snapCountValue'),
+      under5Stat: document.getElementById('under5Stat'),
+      under5Value: document.getElementById('under5Value'),
+      stickyLeft: document.getElementById('stickyLeft'),
+      stickySelected: document.getElementById('stickySelected'),
+      stickyRight: document.getElementById('stickyRight'),
+      stickyUnder5: document.getElementById('stickyUnder5'),
+      snapBtn: document.getElementById('snapBtn'),
+      snapHelp: document.getElementById('snapHelp'),
+    };
+
+    function detectGameType(teamName) {
+      const name = String(teamName || '').trim().toLowerCase();
+      if (name === '1/2' || name === '1/2 team') return 8;
+      if (name === '3/4' || name === '3/4 team') return 11;
+      if (name === '5/6' || name === '5/6 team') return 11;
+      return state.gameType || 8;
+    }
+
+    function createPlayersFromText(text) {
+      return text
+        .split(/\r?\n/)
+        .map(v => v.trim())
+        .filter(Boolean)
+        .map((name, i) => ({ id: `${name}-${i}-${Math.random().toString(36).slice(2,7)}`, name, plays: 0, selected: false }));
+    }
+
+    function saveLive() {
+      localStorage.setItem(LIVE_KEY, JSON.stringify({
+        gameType: state.gameType,
+        teamName: state.teamName,
+        rosterText: state.rosterText,
+        players: state.players,
+        gameStarted: state.gameStarted,
+        gameEnded: state.gameEnded,
+        snapCount: state.snapCount,
+        viewMode: state.viewMode,
+        activeTeamId: state.activeTeamId,
+      }));
+      localStorage.setItem(TEAMS_KEY, JSON.stringify(state.savedTeams));
+    }
+
+    function loadSaved() {
+      try {
+        const live = JSON.parse(localStorage.getItem(LIVE_KEY) || 'null');
+        const teams = JSON.parse(localStorage.getItem(TEAMS_KEY) || '[]');
+        if (live) Object.assign(state, live);
+        if (Array.isArray(teams)) state.savedTeams = teams;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function selectedCount() { return state.players.filter(p => p.selected).length; }
+    function playersBelow5() { return state.players.filter(p => p.plays < 5); }
+    function readyToSnap() { return state.gameStarted && !state.gameEnded && selectedCount() === state.gameType; }
+
+    function syncGameTypeFromName() {
+      state.gameType = detectGameType(state.teamName);
+      el.gameTypeDisplay.value = `${state.gameType}-man`;
+    }
+
+    function loadRosterFromText() {
+      state.teamName = el.teamName.value.trim();
+      state.rosterText = el.rosterText.value;
+      syncGameTypeFromName();
+      state.players = createPlayersFromText(state.rosterText);
+      state.gameStarted = false;
+      state.gameEnded = false;
+      state.snapCount = 0;
+      render();
+      saveLive();
+    }
+
+    function togglePlayer(id) {
+      if (!state.gameStarted || state.gameEnded) return;
+      state.players = state.players.map(p => p.id === id ? { ...p, selected: !p.selected } : p);
+      render();
+      saveLive();
+    }
+
+    function movePlayer(id, direction) {
+      if (state.viewMode !== 'manual') return;
+      const idx = state.players.findIndex(p => p.id === id);
+      const target = idx + direction;
+      if (idx < 0 || target < 0 || target >= state.players.length) return;
+      const next = [...state.players];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      state.players = next;
+      render();
+      saveLive();
+    }
+
+    function handleSnap() {
+      if (!readyToSnap()) return;
+      state.players = state.players.map(p => p.selected ? { ...p, plays: p.plays + 1 } : p);
+      state.snapCount += 1;
+      if (navigator.vibrate) navigator.vibrate(60);
+      el.snapBtn.classList.add('flash');
+      setTimeout(() => el.snapBtn.classList.remove('flash'), 180);
+      render();
+      saveLive();
+    }
+
+    function startGame() { state.gameStarted = true; state.gameEnded = false; render(); saveLive(); }
+    function endGame() { state.gameEnded = true; render(); saveLive(); }
+
+    function resetGame() {
+      state.players = state.players.map(p => ({ ...p, plays: 0, selected: false }));
+      state.snapCount = 0;
+      state.gameStarted = false;
+      state.gameEnded = false;
+      render();
+      saveLive();
+    }
+
+    function autoSelectLowest() {
+      if (!state.gameStarted || state.gameEnded) return;
+      const ids = new Set([...state.players]
+        .sort((a,b) => a.plays - b.plays || a.name.localeCompare(b.name))
+        .slice(0, state.gameType)
+        .map(p => p.id));
+      state.players = state.players.map(p => ({ ...p, selected: ids.has(p.id) }));
+      render();
+      saveLive();
+    }
+
+    function saveTeam() {
+      const name = el.teamName.value.trim();
+      const roster = el.rosterText.value.trim();
+      if (!name || !roster) return;
+      state.teamName = name;
+      state.rosterText = el.rosterText.value;
+      syncGameTypeFromName();
+      const record = {
+        id: state.activeTeamId || `${name}-${Date.now()}`,
+        name,
+        gameType: state.gameType,
+        rosterText: state.rosterText,
+      };
+      const idx = state.savedTeams.findIndex(t => t.id === record.id || t.name.toLowerCase() === name.toLowerCase());
+      if (idx >= 0) {
+        const keepId = state.savedTeams[idx].id;
+        state.savedTeams[idx] = { ...record, id: keepId };
+        state.activeTeamId = keepId;
+      } else {
+        state.savedTeams.push(record);
+        state.activeTeamId = record.id;
+      }
+      render();
+      saveLive();
+    }
+
+    function loadTeam(team) {
+      state.activeTeamId = team.id || null;
+      state.teamName = team.name || '';
+      state.gameType = detectGameType(team.name || '');
+      state.rosterText = team.rosterText || '';
+      state.players = createPlayersFromText(state.rosterText);
+      state.gameStarted = false;
+      state.gameEnded = false;
+      state.snapCount = 0;
+      render();
+      saveLive();
+    }
+
+    function deleteTeam(id) {
+      state.savedTeams = state.savedTeams.filter(t => t.id !== id);
+      if (state.activeTeamId === id) state.activeTeamId = null;
+      render();
+      saveLive();
+    }
+
+    function exportBackup() {
+      const blob = new Blob([JSON.stringify({ live: {
+        gameType: state.gameType,
+        teamName: state.teamName,
+        rosterText: state.rosterText,
+        players: state.players,
+        gameStarted: state.gameStarted,
+        gameEnded: state.gameEnded,
+        snapCount: state.snapCount,
+        viewMode: state.viewMode,
+        activeTeamId: state.activeTeamId,
+      }, savedTeams: state.savedTeams }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'play-tracker-backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function restoreBackup(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result));
+          if (parsed.savedTeams) state.savedTeams = parsed.savedTeams;
+          if (parsed.live) Object.assign(state, parsed.live);
+          render();
+          saveLive();
+        } catch (e) {
+          alert('Could not restore that backup file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function csvToRows(text) {
+      const rows = [];
+      let row = [];
+      let value = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+        if (c === '"') {
+          if (inQuotes && next === '"') { value += '"'; i++; }
+          else inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+          row.push(value); value = '';
+        } else if ((c === '\n' || c === '\r') && !inQuotes) {
+          if (c === '\r' && next === '\n') i++;
+          row.push(value); rows.push(row); row = []; value = '';
+        } else {
+          value += c;
+        }
+      }
+      row.push(value);
+      rows.push(row);
+      return rows.filter(r => r.some(cell => String(cell).trim() !== ''));
+    }
+
+    function buildTeamRecordsFromRows(rows) {
+      if (!rows.length) return [];
+      const headers = rows[0].map(v => String(v || '').trim());
+      const wanted = ['1/2', '3/4', '5/6'];
+      const teams = [];
+
+      for (const wantedName of wanted) {
+        const colIndex = headers.findIndex(h => h === wantedName);
+        if (colIndex === -1) continue;
+        const players = [];
+        for (let r = 1; r < rows.length; r++) {
+          const player = String((rows[r] || [])[colIndex] || '').trim();
+          if (player) players.push(player);
+        }
+        teams.push({
+          id: `sheet-${wantedName}`,
+          name: wantedName,
+          gameType: detectGameType(wantedName),
+          rosterText: players.join('\n')
+        });
+      }
+
+      return teams;
+    }
+
+    async function loadTeamsFromGoogleSheet() {
+      const sheetId = el.sheetId.value.trim();
+      const gid = el.sheetGid.value.trim() || '0';
+      if (!sheetId) return;
+      el.sheetStatus.textContent = 'Loading teams from Google Sheet...';
+
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+      try {
+        const res = await fetch(csvUrl);
+        if (!res.ok) throw new Error('Could not download sheet');
+        const text = await res.text();
+        const rows = csvToRows(text);
+        const teams = buildTeamRecordsFromRows(rows);
+        if (!teams.length) throw new Error('No matching team columns found');
+
+        for (const team of teams) {
+          const existing = state.savedTeams.findIndex(t => t.name.toLowerCase() === team.name.toLowerCase());
+          if (existing >= 0) state.savedTeams[existing] = { ...state.savedTeams[existing], ...team, id: state.savedTeams[existing].id };
+          else state.savedTeams.push(team);
+        }
+
+        el.sheetStatus.textContent = `Loaded ${teams.length} team(s) from the sheet.`;
+        render();
+        saveLive();
+      } catch (err) {
+        console.error(err);
+        el.sheetStatus.textContent = 'Sheet load failed. Publish the sheet to the web as CSV or make sure the tab can be exported.';
+      }
+    }
+
+    function getDisplayedPlayers() {
+      let list = [...state.players];
+      const q = state.search.trim().toLowerCase();
+      if (state.viewMode === 'selected') list.sort((a,b) => Number(b.selected) - Number(a.selected) || a.name.localeCompare(b.name));
+      if (state.viewMode === 'needs-plays') list.sort((a,b) => a.plays - b.plays || Number(b.selected) - Number(a.selected) || a.name.localeCompare(b.name));
+      if (state.viewMode === 'plays-low') list.sort((a,b) => a.plays - b.plays || a.name.localeCompare(b.name));
+      if (state.viewMode === 'plays-high') list.sort((a,b) => b.plays - a.plays || a.name.localeCompare(b.name));
+      if (state.viewMode === 'name') list.sort((a,b) => a.name.localeCompare(b.name));
+      if (q) list = list.filter(p => p.name.toLowerCase().includes(q));
+      return list;
+    }
+
+    function renderSavedTeams() {
+      el.savedTeams.innerHTML = '';
+      if (!state.savedTeams.length) {
+        el.savedTeams.innerHTML = '<div class="tiny">Tap “Load Teams From Sheet” after your sheet is published. You can also save teams locally here.</div>';
+        return;
+      }
+      state.savedTeams.forEach(team => {
+        const wrap = document.createElement('div');
+        wrap.className = 'team-card' + (state.activeTeamId === team.id ? ' active' : '');
+        wrap.innerHTML = `
+          <div class="team-top">
+            <div>
+              <div class="team-name"></div>
+              <div class="tiny"></div>
+            </div>
+            <button class="mini-btn" title="Delete">×</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn primary grow">Load Team</button>
+          </div>
+        `;
+        wrap.querySelector('.team-name').textContent = team.name;
+        wrap.querySelector('.tiny').textContent = `${detectGameType(team.name)}-man • ${team.rosterText.split(/\r?\n/).filter(Boolean).length} players`;
+        wrap.querySelector('.btn').addEventListener('click', () => loadTeam(team));
+        wrap.querySelector('.mini-btn').addEventListener('click', () => deleteTeam(team.id));
+        el.savedTeams.appendChild(wrap);
+      });
+    }
+
+    function renderPlayers() {
+      const players = getDisplayedPlayers();
+      el.players.innerHTML = '';
+      if (!players.length) {
+        el.players.innerHTML = '<div class="tiny">No players loaded yet.</div>';
+        return;
+      }
+      players.forEach(player => {
+        const needs = Math.max(0, 5 - player.plays);
+        const low = player.plays < 5;
+        const card = document.createElement('div');
+        card.className = 'player' + (player.selected ? ' selected' : '') + (low && !player.selected ? ' low' : '');
+        card.innerHTML = `
+          <div class="player-header">
+            <div>
+              <div class="player-name"></div>
+              <div class="player-sub"></div>
+            </div>
+            <div class="plays-wrap">
+              <div class="plays"></div>
+              <div class="tiny">plays</div>
+            </div>
+          </div>
+          <div class="row" style="align-items:center; gap:8px;">
+            <div class="badges"></div>
+            <div class="move-buttons ${state.viewMode === 'manual' ? '' : 'hidden'}">
+              <button class="mini-btn up">↑</button>
+              <button class="mini-btn down">↓</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.player-name').textContent = player.name;
+        card.querySelector('.player-sub').textContent = player.selected ? 'On field' : 'Bench';
+        const playsEl = card.querySelector('.plays');
+        playsEl.textContent = player.plays;
+        playsEl.className = 'plays ' + (low ? 'low-num' : 'ok');
+        const badges = card.querySelector('.badges');
+        badges.innerHTML = `
+          <span class="badge ${low ? 'red' : 'green'}">${low ? `${needs} more to hit 5` : 'Met minimum'}</span>
+          ${player.selected ? '<span class="badge gray">Selected</span>' : ''}
+        `;
+        card.addEventListener('click', () => togglePlayer(player.id));
+        card.querySelector('.up').addEventListener('click', (e) => { e.stopPropagation(); movePlayer(player.id, -1); });
+        card.querySelector('.down').addEventListener('click', (e) => { e.stopPropagation(); movePlayer(player.id, 1); });
+        el.players.appendChild(card);
+      });
+    }
+
+    function renderSummary() {
+      const selected = state.players.filter(p => p.selected);
+      el.selectedPlayers.innerHTML = selected.length ? selected.map(p => `<span class="field-pill">${escapeHtml(p.name)}</span>`).join('') : '<span class="tiny">No players selected</span>';
+
+      const under = [...playersBelow5()].sort((a,b) => a.plays - b.plays || a.name.localeCompare(b.name));
+      el.under5List.innerHTML = under.length
+        ? under.map(p => `<div class="summary-item"><span>${escapeHtml(p.name)}</span><span>Needs ${5 - p.plays}</span></div>`).join('')
+        : '<div class="badge green">Everyone has at least 5 plays</div>';
+    }
+
+    function renderStats() {
+      const selected = selectedCount();
+      const under = playersBelow5().length;
+      const selectedOkay = selected === state.gameType;
+      el.onFieldValue.textContent = `${selected}/${state.gameType}`;
+      el.stickySelected.textContent = `${selected}/${state.gameType}`;
+      el.snapCountValue.textContent = state.snapCount;
+      el.under5Value.textContent = under;
+      el.stickyUnder5.textContent = under;
+      el.onFieldStat.className = 'stat ' + (selectedOkay ? 'green-soft' : 'amber-soft');
+      el.stickyLeft.className = 'snap-box ' + (selectedOkay ? 'green-soft' : 'amber-soft');
+      el.under5Stat.className = 'stat ' + (under === 0 ? 'green-soft' : 'red-soft');
+      el.stickyRight.className = 'snap-box ' + (under === 0 ? 'green-soft' : 'red-soft');
+      el.snapBtn.disabled = !readyToSnap();
+      el.snapBtn.className = 'snap-btn' + (readyToSnap() ? ' ready' : '');
+      if (!state.gameStarted) el.snapHelp.textContent = 'Start the game to enable snapping.';
+      else if (state.gameEnded) el.snapHelp.textContent = 'Game ended. Review totals above.';
+      else if (!readyToSnap()) el.snapHelp.textContent = `Select exactly ${state.gameType} players to record the next snap.`;
+      else el.snapHelp.textContent = 'Correct number selected. Ready for the next play.';
+    }
+
+    function renderControls() {
+      el.teamName.value = state.teamName;
+      el.rosterText.value = state.rosterText;
+      el.gameTypeDisplay.value = `${state.gameType}-man`;
+      document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.classList.toggle('primary', btn.dataset.view === state.viewMode);
+      });
+    }
+
+    function render() {
+      syncGameTypeFromName();
+      renderControls();
+      renderStats();
+      renderSavedTeams();
+      renderPlayers();
+      renderSummary();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    el.teamName.addEventListener('input', e => {
+      state.teamName = e.target.value;
+      syncGameTypeFromName();
+      renderControls();
+      saveLive();
+    });
+    el.rosterText.addEventListener('input', e => { state.rosterText = e.target.value; saveLive(); });
+    el.loadRosterBtn.addEventListener('click', loadRosterFromText);
+    el.saveTeamBtn.addEventListener('click', saveTeam);
+    el.startGameBtn.addEventListener('click', startGame);
+    el.endGameBtn.addEventListener('click', endGame);
+    el.resetGameBtn.addEventListener('click', resetGame);
+    el.autoSelectBtn.addEventListener('click', autoSelectLowest);
+    el.backupBtn.addEventListener('click', exportBackup);
+    el.restoreInput.addEventListener('change', e => { if (e.target.files[0]) restoreBackup(e.target.files[0]); });
+    el.searchInput.addEventListener('input', e => { state.search = e.target.value; render(); });
+    el.snapBtn.addEventListener('click', handleSnap);
+    el.loadSheetBtn.addEventListener('click', loadTeamsFromGoogleSheet);
+    document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => {
+      state.viewMode = btn.dataset.view;
+      render();
+      saveLive();
+    }));
+
+    loadSaved();
+    render();
+  </script>
+</body>
+</html>
