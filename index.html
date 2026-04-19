@@ -75,6 +75,7 @@
     .player.selected { background: #ecfdf5; border-color: var(--green); }
     .player.low { box-shadow: inset 0 0 0 2px #fecaca; }
     .player.absent { background: #f8fafc; border-style: dashed; opacity: .75; }
+    .player.in-group { background: #eff6ff; border-color: var(--blue); }
     .player-header { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
     .player-name { font-size: 22px; font-weight: 900; line-height: 1.05; }
     .player-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
@@ -135,9 +136,32 @@
     .history-title { font-weight: 800; }
     .history-meta { font-size: 12px; color: var(--muted); }
 
-    .nav-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .nav-tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
     .page { display: none; }
     .page.active { display: block; }
+
+    .group-counts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .group-count {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: white;
+      padding: 10px;
+    }
+    .group-count-title {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .group-count-value {
+      font-size: 22px;
+      font-weight: 900;
+      margin-top: 4px;
+    }
 
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 100;
@@ -165,7 +189,8 @@
       <div class="sub">Load your team, set optional groups, and track plays fast.</div>
 
       <div class="nav-tabs">
-        <button id="trackerTabBtn" class="btn primary">Tracker</button>
+        <button id="gameTabBtn" class="btn primary">Game</button>
+        <button id="groupsTabBtn" class="btn">Groups</button>
         <button id="savedGamesTabBtn" class="btn">Saved Games</button>
       </div>
 
@@ -185,7 +210,7 @@
       </div>
     </div>
 
-    <div id="trackerPage" class="page active">
+    <div id="gamePage" class="page active">
       <div class="two-col">
         <div>
           <div class="card">
@@ -216,26 +241,12 @@
               <button id="resetGameBtn" class="btn secondary grow">Reset Game</button>
             </div>
           </div>
-
-          <div class="card">
-            <div class="label">Group Setup</div>
-            <div class="tiny" style="margin-bottom:8px;">Before the game starts, choose a group and tap players to add or remove them. Players can be in multiple groups. Group edits are locked after the game starts.</div>
-            <div class="group-grid" style="margin-bottom:8px;">
-              <button class="btn chip" data-edit-group="offense">OFF</button>
-              <button class="btn chip" data-edit-group="defense">DEF</button>
-              <button class="btn chip" data-edit-group="kickoff">KO</button>
-              <button class="btn chip" data-edit-group="kickoffReturn">KR</button>
-              <button class="btn chip" data-edit-group="other">OTHER</button>
-              <button class="btn chip" data-edit-group="secondTeam">2ND TEAM</button>
-            </div>
-            <div id="groupEditStatus" class="tiny">No group selected.</div>
-          </div>
         </div>
 
         <div>
           <div class="card">
             <div class="label">Players</div>
-            <div class="tiny" style="margin-bottom:8px;">Before the game starts, tap a player card to mark them absent or present. If a group is selected in Group Setup, tapping players edits that group instead.</div>
+            <div class="tiny" style="margin-bottom:8px;">Before the game starts, tap a player card to mark them absent or present. During the game, tap players in and out.</div>
             <input id="searchInput" class="input search" placeholder="Search player" />
 
             <div class="group-grid" id="groupButtons">
@@ -264,6 +275,63 @@
             <div style="height:12px"></div>
             <div class="label" style="margin-bottom:8px;">Still needs snaps</div>
             <div id="under5List" class="summary-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="groupsPage" class="page">
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="label">Group Setup</div>
+            <div class="tiny" style="margin-bottom:8px;">Choose a group, then tap players below to add or remove them. Players can be in multiple groups. Group edits are locked after the game starts.</div>
+
+            <div class="group-grid" style="margin-bottom:8px;">
+              <button class="btn chip" data-edit-group="offense">OFF</button>
+              <button class="btn chip" data-edit-group="defense">DEF</button>
+              <button class="btn chip" data-edit-group="kickoff">KO</button>
+              <button class="btn chip" data-edit-group="kickoffReturn">KR</button>
+              <button class="btn chip" data-edit-group="other">OTHER</button>
+              <button class="btn chip" data-edit-group="secondTeam">2ND TEAM</button>
+            </div>
+
+            <div id="groupEditStatus" class="tiny">No group selected.</div>
+
+            <div class="group-counts">
+              <div class="group-count">
+                <div class="group-count-title">OFF</div>
+                <div id="count-offense" class="group-count-value">0</div>
+              </div>
+              <div class="group-count">
+                <div class="group-count-title">DEF</div>
+                <div id="count-defense" class="group-count-value">0</div>
+              </div>
+              <div class="group-count">
+                <div class="group-count-title">KO</div>
+                <div id="count-kickoff" class="group-count-value">0</div>
+              </div>
+              <div class="group-count">
+                <div class="group-count-title">KR</div>
+                <div id="count-kickoffReturn" class="group-count-value">0</div>
+              </div>
+              <div class="group-count">
+                <div class="group-count-title">OTHER</div>
+                <div id="count-other" class="group-count-value">0</div>
+              </div>
+              <div class="group-count">
+                <div class="group-count-title">2ND TEAM</div>
+                <div id="count-secondTeam" class="group-count-value">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="label">Edit Group Players</div>
+            <div class="tiny" style="margin-bottom:8px;">Select a group on the left, then tap players here to add or remove them from that group.</div>
+            <div id="groupPlayers" class="players"></div>
           </div>
         </div>
       </div>
@@ -319,9 +387,9 @@
   </div>
 
   <script>
-    const LIVE_KEY = 'youth-play-tracker-live-v6';
-    const TEAMS_KEY = 'youth-play-tracker-teams-v6';
-    const RESULTS_KEY = 'youth-play-tracker-results-v6';
+    const LIVE_KEY = 'youth-play-tracker-live-v7';
+    const TEAMS_KEY = 'youth-play-tracker-teams-v7';
+    const RESULTS_KEY = 'youth-play-tracker-results-v7';
     const SHEET_ID = '1BNuh-Zwd_4ZwAGnOCec9vdLIPxTz8qvnrXPnCSl2H9Q';
     const SHEET_GID = '0';
 
@@ -336,7 +404,7 @@
     };
 
     const state = {
-      page: 'tracker',
+      page: 'game',
       activeLoadGroup: '',
       gameType: 8,
       teamName: '',
@@ -356,9 +424,11 @@
     };
 
     const el = {
-      trackerTabBtn: document.getElementById('trackerTabBtn'),
+      gameTabBtn: document.getElementById('gameTabBtn'),
+      groupsTabBtn: document.getElementById('groupsTabBtn'),
       savedGamesTabBtn: document.getElementById('savedGamesTabBtn'),
-      trackerPage: document.getElementById('trackerPage'),
+      gamePage: document.getElementById('gamePage'),
+      groupsPage: document.getElementById('groupsPage'),
       savedGamesPage: document.getElementById('savedGamesPage'),
       teamSelect: document.getElementById('teamSelect'),
       gameName: document.getElementById('gameName'),
@@ -374,6 +444,7 @@
       historyList: document.getElementById('historyList'),
       searchInput: document.getElementById('searchInput'),
       players: document.getElementById('players'),
+      groupPlayers: document.getElementById('groupPlayers'),
       selectedPlayers: document.getElementById('selectedPlayers'),
       under5List: document.getElementById('under5List'),
       onFieldStat: document.getElementById('onFieldStat'),
@@ -392,6 +463,14 @@
       summaryMeta: document.getElementById('summaryMeta'),
       summaryBody: document.getElementById('summaryBody'),
       closeSummaryBtn: document.getElementById('closeSummaryBtn'),
+      groupCounts: {
+        offense: document.getElementById('count-offense'),
+        defense: document.getElementById('count-defense'),
+        kickoff: document.getElementById('count-kickoff'),
+        kickoffReturn: document.getElementById('count-kickoffReturn'),
+        other: document.getElementById('count-other'),
+        secondTeam: document.getElementById('count-secondTeam'),
+      }
     };
 
     function detectGameType(teamName) {
@@ -486,7 +565,7 @@
     }
 
     function readyToSnap() {
-      return state.page === 'tracker' && state.gameStarted && !state.gameEnded && selectedCount() === state.gameType;
+      return state.page === 'game' && state.gameStarted && !state.gameEnded && selectedCount() === state.gameType;
     }
 
     function syncGameTypeFromName() {
@@ -494,19 +573,31 @@
       el.gameTypeDisplay.value = `${state.gameType}-man`;
     }
 
-    function ensureTeamExists(name, rosterText) {
-      const gameType = detectGameType(name);
-      let team = state.teams.find(t => t.name.toLowerCase() === name.toLowerCase());
-      if (!team) {
-        team = { id: `team-${name}-${Date.now()}`, name, gameType, rosterText, groups: makeEmptyGroups() };
-        state.teams.push(team);
-      }
-      if (!team.groups) team.groups = makeEmptyGroups();
-      team.name = name;
-      team.gameType = gameType;
-      team.rosterText = rosterText;
+    function loadCurrentTeamState() {
+      const team = currentTeamRecord();
+      if (!team) return;
+      state.teamName = team.name;
+      state.gameType = detectGameType(team.name);
+      state.rosterText = team.rosterText || '';
+      state.players = createPlayersFromText(state.rosterText, state.players);
+    }
+
+    function loadTeamById(teamId) {
+      const team = state.teams.find(t => t.id === teamId);
+      if (!team) return;
       state.activeTeamId = team.id;
-      return team;
+      state.teamName = team.name;
+      state.gameType = detectGameType(team.name);
+      state.rosterText = team.rosterText || '';
+      state.players = createPlayersFromText(state.rosterText, state.players);
+      state.gameStarted = false;
+      state.gameEnded = false;
+      state.snapCount = 0;
+      state.snapHistory = [];
+      state.editingGroup = '';
+      state.activeLoadGroup = '';
+      render();
+      saveAll();
     }
 
     function toggleGroupMembership(playerId) {
@@ -524,7 +615,8 @@
       const player = state.players.find(p => p.id === id);
       if (!player) return;
 
-      if (!state.gameStarted && state.editingGroup) {
+      if (state.page === 'groups') {
+        if (state.gameStarted || !state.editingGroup) return;
         toggleGroupMembership(id);
         return;
       }
@@ -648,24 +740,6 @@
       const ids = new Set(currentGroups()[groupKey] || []);
       state.players = state.players.map(p => ({ ...p, selected: !p.absent && ids.has(p.id) }));
       state.activeLoadGroup = groupKey;
-      render();
-      saveAll();
-    }
-
-    function loadTeamById(teamId) {
-      const team = state.teams.find(t => t.id === teamId);
-      if (!team) return;
-      state.activeTeamId = team.id;
-      state.teamName = team.name;
-      state.gameType = detectGameType(team.name);
-      state.rosterText = team.rosterText || '';
-      state.players = createPlayersFromText(state.rosterText, state.players);
-      state.gameStarted = false;
-      state.gameEnded = false;
-      state.snapCount = 0;
-      state.snapHistory = [];
-      state.editingGroup = '';
-      state.activeLoadGroup = '';
       render();
       saveAll();
     }
@@ -885,7 +959,7 @@
       });
     }
 
-    function renderPlayers() {
+    function renderGamePlayers() {
       const players = getDisplayedPlayers();
       const groups = currentGroups();
       el.players.innerHTML = '';
@@ -923,11 +997,7 @@
         `;
 
         card.querySelector('.player-name').textContent = player.name;
-
-        if (!state.gameStarted && state.editingGroup) {
-          const inGroup = (groups[state.editingGroup] || []).includes(player.id);
-          card.querySelector('.player-sub').textContent = `${inGroup ? 'In' : 'Not in'} ${GROUP_LABELS[state.editingGroup]} - tap to change`;
-        } else if (!state.gameStarted) {
+        if (!state.gameStarted) {
           card.querySelector('.player-sub').textContent = player.absent ? 'Absent - tap to mark present' : 'Present - tap to mark absent';
         } else {
           card.querySelector('.player-sub').textContent = player.absent ? 'Absent' : (player.selected ? 'On field' : 'Bench');
@@ -948,6 +1018,64 @@
         card.querySelector('.up').addEventListener('click', (e) => { e.stopPropagation(); movePlayer(player.id, -1); });
         card.querySelector('.down').addEventListener('click', (e) => { e.stopPropagation(); movePlayer(player.id, 1); });
         el.players.appendChild(card);
+      });
+    }
+
+    function renderGroupPlayers() {
+      const players = [...state.players];
+      const groups = currentGroups();
+      el.groupPlayers.innerHTML = '';
+
+      if (!players.length) {
+        el.groupPlayers.innerHTML = '<div class="tiny">No players loaded yet.</div>';
+        return;
+      }
+
+      players.forEach(player => {
+        const inGroup = state.editingGroup && (groups[state.editingGroup] || []).includes(player.id);
+        const tags = GROUP_KEYS.filter(key => (groups[key] || []).includes(player.id)).map(key => GROUP_LABELS[key]);
+
+        const card = document.createElement('div');
+        card.className = 'player' + (inGroup ? ' in-group' : '') + (player.absent ? ' absent' : '');
+        card.innerHTML = `
+          <div class="player-header">
+            <div>
+              <div class="player-name"></div>
+              <div class="player-sub"></div>
+            </div>
+            <div class="plays-wrap">
+              <div class="plays"></div>
+              <div class="tiny">plays</div>
+            </div>
+          </div>
+          <div class="row" style="align-items:center; gap:8px;">
+            <div class="badges"></div>
+          </div>
+        `;
+
+        card.querySelector('.player-name').textContent = player.name;
+        card.querySelector('.player-sub').textContent = state.editingGroup
+          ? `${inGroup ? 'In' : 'Not in'} ${GROUP_LABELS[state.editingGroup]} - tap to change`
+          : 'Choose a group to edit';
+
+        const playsEl = card.querySelector('.plays');
+        playsEl.textContent = player.plays;
+        playsEl.className = 'plays ' + (!player.absent && player.plays < 5 ? 'low-num' : 'ok');
+
+        let inner = '';
+        if (player.absent) inner += '<span class="badge amber">Absent</span>';
+        tags.forEach(tag => { inner += `<span class="badge blue">${tag}</span>`; });
+
+        card.querySelector('.badges').innerHTML = inner;
+        card.addEventListener('click', () => togglePlayer(player.id));
+        el.groupPlayers.appendChild(card);
+      });
+    }
+
+    function renderGroupCounts() {
+      const groups = currentGroups();
+      GROUP_KEYS.forEach(key => {
+        el.groupCounts[key].textContent = (groups[key] || []).length;
       });
     }
 
@@ -981,12 +1109,37 @@
       el.snapBtn.className = 'snap-btn' + (readyToSnap() ? ' ready' : '');
       el.undoBtn.disabled = !state.snapHistory.length;
 
-      if (state.page !== 'tracker') el.snapHelp.textContent = 'Saved Games page open.';
-      else if (!state.gameStarted && state.editingGroup) el.snapHelp.textContent = `Editing ${GROUP_LABELS[state.editingGroup]} group. Tap players to add or remove them.`;
+      if (state.page === 'savedGames') el.snapHelp.textContent = 'Saved Games page open.';
+      else if (state.page === 'groups') {
+        if (state.gameStarted) el.snapHelp.textContent = 'Groups are locked during the game.';
+        else if (state.editingGroup) el.snapHelp.textContent = `Editing ${GROUP_LABELS[state.editingGroup]} group. Tap players to add or remove them.`;
+        else el.snapHelp.textContent = 'Choose a group to edit.';
+      }
       else if (!state.gameStarted) el.snapHelp.textContent = 'Before the game, tap players to mark them absent if needed.';
       else if (state.gameEnded) el.snapHelp.textContent = 'Game ended. Review totals above.';
       else if (!readyToSnap()) el.snapHelp.textContent = `Select exactly ${state.gameType} players to record the next snap.`;
       else el.snapHelp.textContent = 'Correct number selected. Ready for the next play.';
+    }
+
+    function renderTeamSelect() {
+      el.teamSelect.innerHTML = '';
+      if (!state.teams.length) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No teams found';
+        el.teamSelect.appendChild(opt);
+        return;
+      }
+
+      state.teams.forEach(team => {
+        const opt = document.createElement('option');
+        opt.value = team.name;
+        opt.textContent = team.name;
+        if ((state.teamName && team.name === state.teamName) || team.id === state.activeTeamId) {
+          opt.selected = true;
+        }
+        el.teamSelect.appendChild(opt);
+      });
     }
 
     function renderControls() {
@@ -995,9 +1148,12 @@
       el.rosterText.value = state.rosterText;
       el.gameTypeDisplay.value = `${state.gameType}-man`;
 
-      el.trackerTabBtn.classList.toggle('primary', state.page === 'tracker');
+      el.gameTabBtn.classList.toggle('primary', state.page === 'game');
+      el.groupsTabBtn.classList.toggle('primary', state.page === 'groups');
       el.savedGamesTabBtn.classList.toggle('primary', state.page === 'savedGames');
-      el.trackerPage.classList.toggle('active', state.page === 'tracker');
+
+      el.gamePage.classList.toggle('active', state.page === 'game');
+      el.groupsPage.classList.toggle('active', state.page === 'groups');
       el.savedGamesPage.classList.toggle('active', state.page === 'savedGames');
 
       document.querySelectorAll('[data-edit-group]').forEach(btn => {
@@ -1011,7 +1167,7 @@
       });
 
       if (!state.editingGroup) {
-        el.groupEditStatus.textContent = state.gameStarted ? 'Groups are locked during the game. Buttons above load saved groups.' : 'No group selected.';
+        el.groupEditStatus.textContent = state.gameStarted ? 'Groups are locked during the game.' : 'No group selected.';
       } else {
         el.groupEditStatus.textContent = `Editing ${GROUP_LABELS[state.editingGroup]}. Tap players below to add or remove them.`;
       }
@@ -1052,7 +1208,9 @@
       renderControls();
       renderStats();
       renderHistory();
-      renderPlayers();
+      renderGamePlayers();
+      renderGroupPlayers();
+      renderGroupCounts();
       renderSummary();
     }
 
@@ -1065,7 +1223,8 @@
         .replace(/'/g, '&#39;');
     }
 
-    el.trackerTabBtn.addEventListener('click', () => setPage('tracker'));
+    el.gameTabBtn.addEventListener('click', () => setPage('game'));
+    el.groupsTabBtn.addEventListener('click', () => setPage('groups'));
     el.savedGamesTabBtn.addEventListener('click', () => setPage('savedGames'));
 
     el.teamSelect.addEventListener('change', e => {
@@ -1081,6 +1240,12 @@
 
     el.rosterText.addEventListener('input', e => {
       state.rosterText = e.target.value;
+      const team = currentTeamRecord();
+      if (team) {
+        team.rosterText = state.rosterText;
+        state.players = createPlayersFromText(state.rosterText, state.players);
+      }
+      render();
       saveAll();
     });
 
