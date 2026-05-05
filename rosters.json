@@ -1,0 +1,20 @@
+[
+  {
+    "id": "team-1-2",
+    "name": "1/2 Team",
+    "gameType": 8,
+    "url": "https://raw.githubusercontent.com/levigrammer21/Snaptrack/main/roster%201-2.json"
+  },
+  {
+    "id": "team-3-4",
+    "name": "3/4 Team",
+    "gameType": 11,
+    "url": "https://raw.githubusercontent.com/levigrammer21/Snaptrack/main/roster%203-4.json"
+  },
+  {
+    "id": "team-5-6",
+    "name": "5/6 Team",
+    "gameType": 11,
+    "url": "https://raw.githubusercontent.com/levigrammer21/Snaptrack/main/roster%205-6.json"
+  }
+]
