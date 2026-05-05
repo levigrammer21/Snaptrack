@@ -28,7 +28,6 @@
     body { padding-bottom: 110px; }
     .app { max-width: 480px; margin: 0 auto; padding: 10px 12px; }
 
-    /* HEADER */
     .hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 0 8px; }
     .logo { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: .05em; }
     .logo em { color: var(--blue); font-style: normal; }
@@ -37,7 +36,6 @@
     .hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
     .game-lbl { font-size: 12px; color: var(--muted); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* STAT BAR */
     .stat-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
     .sbox { background: var(--surf); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 6px; text-align: center; }
     .sbox .v { font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 1; }
@@ -47,44 +45,32 @@
     .sbox.amber { background: var(--amber-dim); border-color: rgba(245,158,11,.3); } .sbox.amber .v { color: var(--amber); }
     .sbox.red   { background: var(--red-dim);   border-color: rgba(239,68,68,.3);  } .sbox.red .v   { color: var(--red); }
 
-    /* TABS */
     .tabs { display: grid; grid-template-columns: repeat(4,1fr); gap: 3px; background: var(--surf); border: 1px solid var(--border); border-radius: var(--r); padding: 3px; margin-bottom: 10px; }
     .tab { background: transparent; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 800; padding: 7px 2px; border-radius: 10px; cursor: pointer; text-transform: uppercase; transition: all .12s; }
     .tab.on { background: var(--blue); color: #fff; }
 
-    /* PAGES */
     .page { display: none; } .page.on { display: block; }
 
-    /* CARD */
     .card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; margin-bottom: 10px; }
     .card-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
 
-    /* FORM */
     .field { margin-bottom: 8px; }
     .field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
-    input, select { width: 100%; background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 10px 12px; appearance: none; -webkit-appearance: none; }
-    input:focus, select:focus { outline: none; border-color: var(--blue); }
+    input { width: 100%; background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; padding: 10px 12px; }
+    input:focus { outline: none; border-color: var(--blue); }
     input::placeholder { color: var(--muted); }
-    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7a99' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
 
-    /* TEAM SELECTOR CARDS */
     .team-cards { display: grid; gap: 8px; margin-bottom: 10px; }
-    .team-card {
-      background: var(--surf2); border: 1.5px solid var(--border);
-      border-radius: var(--r); padding: 14px 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      cursor: pointer; transition: all .12s;
-    }
+    .team-card { background: var(--surf2); border: 1.5px solid var(--border); border-radius: var(--r); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all .12s; }
     .team-card:active { transform: scale(.98); }
     .team-card.on { background: var(--blue-dim); border-color: var(--blue); }
     .team-card-name { font-size: 17px; font-weight: 800; }
+    .team-card.on .team-card-name { color: var(--blue); }
     .team-card-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .team-card-arrow { font-size: 20px; color: var(--muted); }
     .team-card.on .team-card-arrow { color: var(--blue); }
-    .team-card.on .team-card-name  { color: var(--blue); }
 
-    /* BUTTONS */
-    .btn { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--surf2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: .04em; transition: transform .08s; }
+    .btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--surf2); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: .04em; transition: transform .08s; }
     .btn:active { transform: scale(.97); }
     .btn.blue  { background: var(--blue);  color: #fff;    border-color: var(--blue); }
     .btn.green { background: var(--green); color: #0d0f14; border-color: var(--green); }
@@ -92,18 +78,15 @@
     .btn:disabled { opacity: .3; pointer-events: none; }
     .row { display: flex; gap: 8px; } .row .btn { flex: 1; }
 
-    /* PHASE */
     .phase-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .phase-btn { background: var(--surf2); border: 1.5px solid var(--border); border-radius: var(--r); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; padding: 11px; cursor: pointer; text-align: center; text-transform: uppercase; letter-spacing: .04em; transition: all .12s; }
+    .phase-btn { background: var(--surf2); border: 1.5px solid var(--border); border-radius: var(--r); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 800; padding: 11px; cursor: pointer; text-align: center; text-transform: uppercase; transition: all .12s; }
     .phase-btn.off.on { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
     .phase-btn.def.on { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 
-    /* CHIPS */
     .chips { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-bottom: 10px; }
     .chip { background: var(--surf2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 800; padding: 7px 2px; cursor: pointer; text-align: center; text-transform: uppercase; transition: all .1s; }
     .chip.on { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
 
-    /* PLAYER CARDS */
     .p-grid { display: grid; gap: 6px; }
     .p-card { background: var(--surf2); border: 1.5px solid var(--border); border-radius: var(--r); padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all .1s; }
     .p-card.sel    { background: var(--blue-dim);  border-color: var(--blue); }
@@ -119,7 +102,6 @@
     .p-plays { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
     .p-plays.low { color: var(--red); } .p-plays.ok { color: var(--green); } .p-plays.dim { color: var(--muted); }
 
-    /* MISC */
     .div  { height: 1px; background: var(--border); margin: 10px 0; }
     .slbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 10px 0 6px; }
     .note { font-size: 12px; color: var(--muted); text-align: center; padding: 14px 0; }
@@ -127,12 +109,6 @@
     .badge.blue  { background: var(--blue-dim);  color: var(--blue); }
     .badge.amber { background: var(--amber-dim); color: var(--amber); }
 
-    /* LOADING STATE */
-    .loading-teams { display: flex; align-items: center; gap: 10px; padding: 14px; color: var(--muted); font-size: 13px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
-
-    /* SNAP BAR */
     .snap-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(13,15,20,.96); backdrop-filter: blur(14px); border-top: 1px solid var(--border); padding: 8px 12px 18px; }
     .snap-inner { max-width: 480px; margin: 0 auto; display: flex; gap: 8px; align-items: stretch; }
     .snap-info  { display: flex; flex-direction: column; gap: 4px; }
@@ -148,22 +124,22 @@
     .snap-total .l { font-size: 9px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
     .snap-help { text-align: center; font-size: 11px; color: var(--muted); margin-top: 5px; max-width: 480px; margin-left: auto; margin-right: auto; }
 
-    /* MODAL */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 80; display: none; align-items: flex-end; justify-content: center; }
     .modal-bg.show { display: flex; }
     .modal { background: var(--surf); border: 1px solid var(--border); border-top: 1px solid rgba(255,255,255,.08); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
     .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: .04em; }
     .modal-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; margin-bottom: 12px; }
 
-    /* STAT MODAL */
     .ptype-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; }
     .ptype-btn { background: var(--surf2); border: 1.5px solid var(--border); border-radius: 10px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 800; padding: 9px 4px; cursor: pointer; text-align: center; text-transform: uppercase; transition: all .1s; }
     .ptype-btn.on { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+
     .sp-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; }
     .sp-btn  { background: var(--surf2); border: 1.5px solid var(--border); border-radius: 10px; padding: 7px 4px; text-align: center; cursor: pointer; transition: all .1s; }
     .sp-btn .n  { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--muted); line-height: 1; }
     .sp-btn .nm { font-size: 10px; font-weight: 700; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sp-btn.on  { background: var(--blue-dim); border-color: var(--blue); } .sp-btn.on .n { color: var(--blue); }
+
     .yard-presets { display: flex; flex-wrap: wrap; gap: 5px; }
     .yp { background: var(--surf2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 800; padding: 5px 11px; cursor: pointer; }
     .yp.neg { color: var(--red);   border-color: rgba(239,68,68,.3); }
@@ -172,11 +148,11 @@
     .yard-row { display: flex; gap: 6px; align-items: center; margin: 8px 0; }
     .yard-row input { text-align: center; font-size: 20px; font-weight: 800; }
     .yard-row .btn  { max-width: 44px; min-height: 40px; border-radius: 8px; font-size: 18px; }
+
     .res-row { display: flex; flex-wrap: wrap; gap: 5px; }
     .res-btn { background: var(--surf2); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 700; padding: 5px 12px; cursor: pointer; transition: all .1s; }
     .res-btn.on { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
 
-    /* PLAY LOG */
     .pl-item { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 9px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
     .pl-num  { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--muted); min-width: 26px; }
     .pl-desc { flex: 1; }
@@ -185,14 +161,12 @@
     .pl-yds { font-family: 'Bebas Neue', sans-serif; font-size: 20px; }
     .pl-yds.pos { color: var(--green); } .pl-yds.neg { color: var(--red); } .pl-yds.zero { color: var(--muted); }
 
-    /* SAVED */
     .gi       { background: var(--surf2); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; margin-bottom: 8px; }
     .gi-title { font-size: 15px; font-weight: 800; }
     .gi-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .gi-acts  { display: flex; gap: 6px; margin-top: 8px; }
     .gi-acts .btn { font-size: 11px; min-height: 34px; }
 
-    /* SUMMARY */
     .sum-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surf2); margin-bottom: 5px; }
     .sum-row.met    { border-color: rgba(34,197,94,.35);  background: var(--green-dim); }
     .sum-row.missed { border-color: rgba(239,68,68,.35);  background: var(--red-dim); }
@@ -216,7 +190,7 @@
   <div class="stat-bar">
     <div class="sbox amber" id="sbField"><div class="v" id="sbFieldV">0/8</div><div class="l">On Field</div></div>
     <div class="sbox blue"><div class="v" id="sbSnapsV">0</div><div class="l">Snaps</div></div>
-    <div class="sbox red" id="sbUnder"><div class="v" id="sbUnderV">0</div><div class="l">Under 5</div></div>
+    <div class="sbox red"   id="sbUnder"><div class="v" id="sbUnderV">0</div><div class="l">Under 5</div></div>
   </div>
 
   <div class="tabs">
@@ -228,27 +202,18 @@
 
   <!-- GAME -->
   <div id="pg-game" class="page on">
-
-    <!-- Setup card -->
     <div class="card" id="setupCard">
       <div class="card-title">Game Setup</div>
-
-      <!-- Team picker (auto-populated on load) -->
       <div class="field"><label>Team</label></div>
-      <div id="teamCards" class="team-cards">
-        <div class="loading-teams"><div class="spinner"></div>Loading teams…</div>
-      </div>
-
-      <div class="field" style="margin-top:4px;">
+      <div class="team-cards" id="teamCards"></div>
+      <div class="field">
         <label>Game / Opponent</label>
         <input id="gameNameIn" placeholder="e.g. vs Eagles" />
       </div>
-
       <div class="div"></div>
       <button class="btn green" id="startBtn">Start Game</button>
     </div>
 
-    <!-- In-game cards -->
     <div class="card hidden" id="phaseCard">
       <div class="card-title">Phase</div>
       <div class="phase-row">
@@ -439,50 +404,93 @@ const db = getFirestore(initializeApp({
   appId:             "1:8653895619:web:d71b112539ea8b1dc6af76"
 }));
 
-async function fbSave(data)   { try { return (await addDoc(collection(db,"games"),data)).id; } catch(e) { return null; } }
-async function fbLoad()       { try { const s=await getDocs(query(collection(db,"games"),orderBy("date","desc"))); return s.docs.map(d=>({...d.data(),_fbId:d.id})); } catch(e) { return []; } }
-async function fbDelete(id)   { try { await deleteDoc(doc(db,"games",id)); } catch(e){} }
+async function fbSave(data)  { try { return (await addDoc(collection(db,"games"),data)).id; } catch(e) { return null; } }
+async function fbLoad()      { try { const s=await getDocs(query(collection(db,"games"),orderBy("date","desc"))); return s.docs.map(d=>({...d.data(),_fbId:d.id})); } catch(e) { return []; } }
+async function fbDelete(id)  { try { await deleteDoc(doc(db,"games",id)); } catch(e){} }
 
-// ── CONFIG ────────────────────────────────────────────────────
-// Point this at your rosters.json index file on GitHub
-// Teams hardcoded — no rosters.json needed
-const HARDCODED_TEAMS = [
+// ── TEAMS (fully hardcoded) ───────────────────────────────────
+const TEAMS = [
   {
-    "id": "team-1-2",
-    "name": "1/2 Team",
-    "gameType": 8,
-    "url": "https://raw.githubusercontent.com/levigrammer21/Snaptrack/main/roster%201-2.json"
+    id: "team-1-2",
+    name: "1/2 Team",
+    gameType: 8,
+    players: [
+      { number: 76, name: "Dillion Campbell" },
+      { number: 33, name: "Jamesyn Cullum"   },
+      { number: 15, name: "Kace Hilbert"      },
+      { number: 40, name: "Ledger Johnson"    },
+      { number: 16, name: "Legend Griffin"    },
+      { number: 24, name: "Niko Grant"        },
+      { number: 21, name: "Reid Grammer"      },
+      { number: 14, name: "Urban Niemann"     },
+      { number: 10, name: "Waylon Bear"       },
+    ]
   },
   {
-    "id": "team-3-4",
-    "name": "3/4 Team",
-    "gameType": 11,
-    "url": "https://raw.githubusercontent.com/levigrammer21/Snaptrack/main/roster%203-4.json"
+    id: "team-3-4",
+    name: "3/4 Team",
+    gameType: 11,
+    players: [
+      { number:  1, name: "John Doe" },
+      { number:  2, name: "John Doe" },
+      { number:  3, name: "John Doe" },
+      { number:  4, name: "John Doe" },
+      { number:  5, name: "John Doe" },
+      { number:  6, name: "John Doe" },
+      { number:  7, name: "John Doe" },
+      { number:  8, name: "John Doe" },
+      { number:  9, name: "John Doe" },
+      { number: 10, name: "John Doe" },
+      { number: 11, name: "John Doe" },
+      { number: 12, name: "John Doe" },
+      { number: 13, name: "John Doe" },
+      { number: 14, name: "John Doe" },
+      { number: 15, name: "John Doe" },
+      { number: 16, name: "John Doe" },
+      { number: 17, name: "John Doe" },
+      { number: 18, name: "John Doe" },
+      { number: 19, name: "John Doe" },
+      { number: 20, name: "John Doe" },
+    ]
   },
   {
-    "id": "team-5-6",
-    "name": "5/6 Team",
-    "gameType": 11,
-    "url": "https://raw.githubusercontent.com/levigrammer21/Snaptrack/main/roster%205-6.json"
-  }
+    id: "team-5-6",
+    name: "5/6 Team",
+    gameType: 11,
+    players: [
+      { number:  1, name: "John Doe" },
+      { number:  2, name: "John Doe" },
+      { number:  3, name: "John Doe" },
+      { number:  4, name: "John Doe" },
+      { number:  5, name: "John Doe" },
+      { number:  6, name: "John Doe" },
+      { number:  7, name: "John Doe" },
+      { number:  8, name: "John Doe" },
+      { number:  9, name: "John Doe" },
+      { number: 10, name: "John Doe" },
+      { number: 11, name: "John Doe" },
+      { number: 12, name: "John Doe" },
+      { number: 13, name: "John Doe" },
+      { number: 14, name: "John Doe" },
+      { number: 15, name: "John Doe" },
+      { number: 16, name: "John Doe" },
+      { number: 17, name: "John Doe" },
+      { number: 18, name: "John Doe" },
+      { number: 19, name: "John Doe" },
+      { number: 20, name: "John Doe" },
+    ]
+  },
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
-const LS = "snaptrak-v4";
+const LS = "snaptrak-v5";
 const S = {
   page:"game", gameStarted:false, gameEnded:false,
   gameName:"", gameType:8, selectedTeamId:null,
   players:[], snapCount:0, snapHistory:[],
   phase:"offense", activeGrp:"", editGrp:"",
-  groups:{ offense:[], defense:[], kickoff:[], kickReturn:[], special:[], secondTeam:[] },
-  playLog:[], results:[],
-  // Team groups stored per team id
-  teamGroups:{},
+  teamGroups:{}, playLog:[], results:[],
 };
-
-// Available teams loaded from GitHub index
-let availableTeams = [];
-
 const D = { pt:"run", bc:null, rec:null, passRes:null, yards:null, tack:null, tack2:null, defRes:null, onField:[] };
 const GN = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
 
@@ -505,63 +513,34 @@ function hydrate() {
   } catch(e){}
 }
 
-// Groups are stored per-team so switching teams doesn't mix them up
 function getGroups() {
   if (!S.selectedTeamId) return { offense:[], defense:[], kickoff:[], kickReturn:[], special:[], secondTeam:[] };
   if (!S.teamGroups[S.selectedTeamId]) S.teamGroups[S.selectedTeamId] = { offense:[], defense:[], kickoff:[], kickReturn:[], special:[], secondTeam:[] };
   return S.teamGroups[S.selectedTeamId];
 }
 
-const active  = () => S.players.filter(p=>!p.absent);
-const selCnt  = () => S.players.filter(p=>p.selected&&!p.absent).length;
-const under5  = () => active().filter(p=>p.plays<5);
-const ready   = () => S.gameStarted && !S.gameEnded && selCnt()===S.gameType;
+const active = () => S.players.filter(p=>!p.absent);
+const selCnt = () => S.players.filter(p=>p.selected&&!p.absent).length;
+const under5 = () => active().filter(p=>p.plays<5);
+const ready  = () => S.gameStarted && !S.gameEnded && selCnt()===S.gameType;
 
-// ── ROSTER LOADING ────────────────────────────────────────────
-async function loadRosterIndex() {
-  availableTeams = HARDCODED_TEAMS;
-  renderTeamCards();
-  if (S.selectedTeamId) {
-    const team = availableTeams.find(t=>t.id===S.selectedTeamId);
-    if (team) await fetchAndApplyRoster(team, false);
-  }
-}
-
-async function fetchAndApplyRoster(team, resetPlays = true) {
-  try {
-    const res  = await fetch(team.url);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-
-    if (resetPlays) {
-      S.players = (data.players||[]).map((p,i) => ({
-        id:`p${p.number}-${i}`, name:p.name, number:p.number,
-        plays:0, selected:false, absent:false
-      }));
-    } else {
-      // Merge: keep existing play counts for known players
-      const fresh = (data.players||[]).map((p,i) => {
-        const ex = S.players.find(e=>e.name===p.name);
-        return ex ? {...ex,selected:false} : { id:`p${p.number}-${i}`, name:p.name, number:p.number, plays:0, selected:false, absent:false };
-      });
-      S.players = fresh;
-    }
-
-    S.gameType       = team.gameType || data.gameType || 8;
-    S.selectedTeamId = team.id;
-
-    persist(); render();
-  } catch(e) {}
-}
-
+// ── SELECT TEAM ───────────────────────────────────────────────
 function selectTeam(team) {
-  if (S.gameStarted) return; // Lock during game
-  fetchAndApplyRoster(team, true);
+  if (S.gameStarted) return;
+  // Keep existing play counts if same team, otherwise fresh start
+  const fresh = team.players.map((p,i) => {
+    const ex = S.selectedTeamId===team.id && S.players.find(e=>e.number===p.number);
+    return ex ? {...ex, selected:false} : { id:`${team.id}-${p.number}`, name:p.name, number:p.number, plays:0, selected:false, absent:false };
+  });
+  S.players        = fresh;
+  S.gameType       = team.gameType;
+  S.selectedTeamId = team.id;
+  persist(); render();
 }
 
 // ── GAME ──────────────────────────────────────────────────────
 function startGame() {
-  if (!S.players.length)            { alert("Select a team first.");                         return; }
+  if (!S.selectedTeamId)            { alert("Select a team first.");                         return; }
   if (!S.gameName.trim())           { alert("Enter a game name.");                            return; }
   if (active().length < S.gameType) { alert(`Need at least ${S.gameType} active players.`);  return; }
   if (!confirm("Start the game?"))  return;
@@ -572,11 +551,12 @@ function startGame() {
 async function endGame() {
   if (!confirm("End the game?")) return;
   S.gameEnded = true;
-  const team  = availableTeams.find(t=>t.id===S.selectedTeamId);
+  const team = TEAMS.find(t=>t.id===S.selectedTeamId);
   const result = {
     id:`g-${Date.now()}`, gameName:S.gameName,
-    teamName: team ? team.name : "", gameType:S.gameType,
-    date:new Date().toISOString(), snapCount:S.snapCount, playLog:[...S.playLog],
+    teamName:team?team.name:"", gameType:S.gameType,
+    date:new Date().toISOString(), snapCount:S.snapCount,
+    playLog:[...S.playLog],
     players:S.players.map(p=>({ name:p.name, number:p.number, plays:p.plays, absent:!!p.absent })),
   };
   const fbId = await fbSave(result);
@@ -616,11 +596,11 @@ function buildPlay() {
   let desc="", sub="";
   if (S.phase==="offense") {
     if (D.pt==="run") {
-      desc = gp(D.bc)?`Run — ${fmt(gp(D.bc))}`:"Run play";
-      sub  = D.yards!==null?`${D.yards>=0?"+":""}${D.yards} yds`:"";
+      desc=gp(D.bc)?`Run — ${fmt(gp(D.bc))}`:"Run play";
+      sub=D.yards!==null?`${D.yards>=0?"+":""}${D.yards} yds`:"";
     } else if (D.pt==="pass") {
-      desc = `Pass — ${fmt(gp(D.bc))} → ${fmt(gp(D.rec))}`;
-      sub  = [D.yards!==null?`${D.yards>=0?"+":""}${D.yards} yds`:"", D.passRes||""].filter(Boolean).join(" · ");
+      desc=`Pass — ${fmt(gp(D.bc))} → ${fmt(gp(D.rec))}`;
+      sub=[D.yards!==null?`${D.yards>=0?"+":""}${D.yards} yds`:"", D.passRes||""].filter(Boolean).join(" · ");
     } else {
       desc="Special teams"; sub=D.yards!==null?`${D.yards>=0?"+":""}${D.yards} yds`:"";
     }
@@ -647,12 +627,10 @@ function loadGroup(key) {
   S.players=S.players.map(p=>({...p,selected:!p.absent&&names.has(p.name)}));
   S.activeGrp=key; persist(); render();
 }
-
 function toggleMember(pid) {
   const p=S.players.find(x=>x.id===pid);
   if (!p||!S.editGrp) return;
-  const grps=getGroups();
-  const arr=grps[S.editGrp]||[];
+  const grps=getGroups(), arr=grps[S.editGrp]||[];
   grps[S.editGrp]=arr.includes(p.name)?arr.filter(n=>n!==p.name):[...arr,p.name];
   persist(); render();
 }
@@ -663,14 +641,13 @@ function render() {
 
   $("sbFieldV").textContent=`${sel}/${S.gameType}`; $("sbSnapsV").textContent=S.snapCount; $("sbUnderV").textContent=u5;
   $("sbField").className="sbox "+(ok?"green":"amber"); $("sbUnder").className="sbox "+(u5===0?"green":"red");
-
   $("snapFieldV").textContent=`${sel}/${S.gameType}`; $("snapFieldV").style.color=ok?"var(--green)":"var(--amber)";
   $("snapUnderV").textContent=u5; $("snapTotalV").textContent=S.snapCount;
   $("snapBtn").disabled=!r; $("snapBtn").className="snap-big"+(r?" ready":"");
-  const team=availableTeams.find(t=>t.id===S.selectedTeamId);
+  const team=TEAMS.find(t=>t.id===S.selectedTeamId);
   $("gameLbl").textContent=S.gameName||(team?team.name:"")||"";
   $("livePill").classList.toggle("show",S.gameStarted&&!S.gameEnded);
-  $("snapHelp").textContent=!S.players.length?"Select a team to get started.":!S.gameStarted?"Select team & start game.":S.gameEnded?"Game over — check Saved tab.":!r?`Select ${S.gameType} players to snap.`:"Ready — tap SNAP.";
+  $("snapHelp").textContent=!S.selectedTeamId?"Select a team to get started.":!S.gameStarted?"Select team & start game.":S.gameEnded?"Game over — check Saved tab.":!r?`Select ${S.gameType} players to snap.`:"Ready — tap SNAP.";
 
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===S.page));
   ["game","roster","log","saved"].forEach(p=>$(`pg-${p}`).classList.toggle("on",S.page===p));
@@ -681,27 +658,27 @@ function render() {
   if (S.page==="saved")  renderSaved();
 }
 
-function renderTeamCards() {
-  if (!availableTeams.length) { $("teamCards").innerHTML='<div class="note">No teams found.</div>'; return; }
-  $("teamCards").innerHTML="";
-  availableTeams.forEach(team=>{
-    const c=document.createElement("div");
-    c.className="team-card"+(S.selectedTeamId===team.id?" on":"");
-    c.innerHTML=`<div><div class="team-card-name">${esc(team.name)}</div><div class="team-card-sub">${team.gameType}-man football</div></div><div class="team-card-arrow">›</div>`;
-    c.onclick=()=>{ if(!S.gameStarted) selectTeam(team); };
-    $("teamCards").appendChild(c);
-  });
-}
-
 function renderGame() {
   const started=S.gameStarted, ended=S.gameEnded;
-  $("setupCard").classList.toggle("hidden",started);
-  $("phaseCard").classList.toggle("hidden",!started||ended);
-  $("groupCard").classList.toggle("hidden",!started||ended);
-  $("playersCard").classList.toggle("hidden",!started||ended);
-  $("endCard").classList.toggle("hidden",!started||ended);
+  $("setupCard").classList.toggle("hidden", started);
+  $("phaseCard").classList.toggle("hidden", !started||ended);
+  $("groupCard").classList.toggle("hidden", !started||ended);
+  $("playersCard").classList.toggle("hidden", !started||ended);
+  $("endCard").classList.toggle("hidden", !started||ended);
 
-  if (!started) { $("gameNameIn").value=S.gameName; renderTeamCards(); return; }
+  if (!started) {
+    $("gameNameIn").value=S.gameName;
+    // Team cards
+    $("teamCards").innerHTML="";
+    TEAMS.forEach(team=>{
+      const c=document.createElement("div");
+      c.className="team-card"+(S.selectedTeamId===team.id?" on":"");
+      c.innerHTML=`<div><div class="team-card-name">${esc(team.name)}</div><div class="team-card-sub">${team.gameType}-man · ${team.players.length} players</div></div><div class="team-card-arrow">›</div>`;
+      c.onclick=()=>selectTeam(team);
+      $("teamCards").appendChild(c);
+    });
+    return;
+  }
 
   document.querySelectorAll(".phase-btn").forEach(b=>b.classList.toggle("on",b.dataset.phase===S.phase));
   document.querySelectorAll("#loadChips .chip").forEach(c=>c.classList.toggle("on",c.dataset.grp===S.activeGrp));
@@ -754,9 +731,9 @@ function renderSaved() {
   $("savedList").innerHTML="";
   S.results.forEach(r=>{
     const d=document.createElement("div"); d.className="gi";
-    d.innerHTML=`<div class="gi-title">${esc(r.gameName)}</div><div class="gi-sub">${r.teamName?r.teamName+" · ":""}${new Date(r.date).toLocaleDateString()} · ${r.snapCount} snaps · ${r.gameType}-man</div><div class="gi-acts"><button class="btn">View</button><button class="btn red">Delete</button></div>`;
-    d.querySelector(".btn").onclick=()=>openView(r);
-    d.querySelectorAll(".btn")[1].onclick=async()=>{ if(!confirm("Delete?"))return; if(r._fbId)await fbDelete(r._fbId); S.results=S.results.filter(x=>x.id!==r.id); persist(); render(); };
+    d.innerHTML=`<div class="gi-title">${esc(r.gameName)}</div><div class="gi-sub">${r.teamName?r.teamName+" · ":""}${new Date(r.date).toLocaleDateString()} · ${r.snapCount} snaps · ${r.gameType}-man</div><div class="gi-acts"><button class="btn view-b">View</button><button class="btn red del-b">Delete</button></div>`;
+    d.querySelector(".view-b").onclick=()=>openView(r);
+    d.querySelector(".del-b").onclick=async()=>{ if(!confirm("Delete?"))return; if(r._fbId)await fbDelete(r._fbId); S.results=S.results.filter(x=>x.id!==r.id); persist(); render(); };
     $("savedList").appendChild(d);
   });
 }
@@ -793,7 +770,7 @@ function buildSPGrid(cid, players, dk) {
 }
 
 function openSum(result) {
-  $("sumMeta").textContent=`${result.gameName} · ${new Date(result.date).toLocaleDateString()} · ${result.snapCount} snaps`;
+  $("sumMeta").textContent=`${result.gameName} · ${result.teamName} · ${new Date(result.date).toLocaleDateString()} · ${result.snapCount} snaps`;
   const sorted=[...result.players].sort((a,b)=>Number(a.absent)-Number(b.absent)||a.plays-b.plays);
   $("sumBody").innerHTML=sorted.map(p=>`<div class="sum-row ${p.absent?"":p.plays>=5?"met":"missed"}"><span><strong>#${p.number}</strong> ${esc(p.name)}${p.absent?" (Absent)":""}</span><span>${p.absent?"—":p.plays+" plays "+(p.plays>=5?"✅":"❌")}</span></div>`).join("");
   $("sumModal").classList.add("show");
@@ -860,9 +837,7 @@ $("viewModal").onclick=e=>{ if(e.target===$("viewModal"))$("viewModal").classLis
 
 // ── BOOT ──────────────────────────────────────────────────────
 hydrate(); render();
-loadRosterIndex(); // Fetch teams from GitHub on startup
 
-// Merge Firebase saved games
 fbLoad().then(games=>{
   const ids=new Set(S.results.map(r=>r.id));
   const fresh=games.filter(g=>!ids.has(g.id));
