@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>SnapTrack</title>
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-<link rel="manifest" href="./manifest.json">
-
-<meta name="theme-color" content="#0d0f14">
-
-<meta name="theme-color" content="#0d0f14">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0d0f14">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -41,6 +38,8 @@
     .logo em { color: var(--blue); font-style: normal; }
     .live-pill { background: var(--green); color: #0d0f14; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; display: none; }
     .live-pill.show { display: inline-block; }
+    .ended-pill { background: var(--muted); color: #0d0f14; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; display: none; }
+    .ended-pill.show { display: inline-block; }
     .hdr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
     .game-lbl { font-size: 12px; color: var(--muted); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -117,6 +116,15 @@
     .badge.blue  { background: var(--blue-dim);  color: var(--blue); }
     .badge.amber { background: var(--amber-dim); color: var(--amber); }
 
+    /* ── GAME OVER BANNER ── */
+    .gameover-card {
+      background: linear-gradient(135deg, rgba(239,68,68,.12), rgba(245,158,11,.08));
+      border: 1.5px solid rgba(239,68,68,.35);
+      border-radius: var(--r); padding: 16px; margin-bottom: 10px; text-align: center;
+    }
+    .gameover-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: var(--amber); letter-spacing: .05em; }
+    .gameover-sub   { font-size: 13px; color: var(--muted); margin: 4px 0 14px; }
+
     .snap-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(13,15,20,.96); backdrop-filter: blur(14px); border-top: 1px solid var(--border); padding: 8px 12px 18px; }
     .snap-inner { max-width: 480px; margin: 0 auto; display: flex; gap: 8px; align-items: stretch; }
     .snap-info  { display: flex; flex-direction: column; gap: 4px; }
@@ -179,6 +187,23 @@
     .sum-row.met    { border-color: rgba(34,197,94,.35);  background: var(--green-dim); }
     .sum-row.missed { border-color: rgba(239,68,68,.35);  background: var(--red-dim); }
 
+    /* ── SUMMARY STATS GRID ── */
+    .sum-stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .sum-stat-box { background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px; text-align: center; }
+    .sum-stat-box .v { font-family: 'Bebas Neue', sans-serif; font-size: 26px; line-height: 1; color: var(--blue); }
+    .sum-stat-box .l { font-size: 9px; color: var(--muted); font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+
+    .sum-section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 12px 0 6px; }
+
+    .participation-bar-wrap { margin-bottom: 4px; }
+    .participation-bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+    .participation-bar-label .name { font-weight: 700; }
+    .participation-bar-label .pct  { color: var(--muted); }
+    .participation-bar-bg { background: var(--border); border-radius: 999px; height: 6px; overflow: hidden; }
+    .participation-bar-fill { height: 100%; border-radius: 999px; background: var(--green); transition: width .3s; }
+    .participation-bar-fill.low { background: var(--red); }
+    .participation-bar-fill.mid { background: var(--amber); }
+
     .hidden { display: none !important; }
     @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
     .pop { animation: pop .18s ease; }
@@ -190,8 +215,9 @@
   <div class="hdr">
     <div class="logo">Snap<em>Track</em></div>
     <div class="hdr-right">
-      <span class="live-pill" id="livePill">● Live</span>
-      <span class="game-lbl" id="gameLbl"></span>
+      <span class="live-pill"  id="livePill">● Live</span>
+      <span class="ended-pill" id="endedPill">● Ended</span>
+      <span class="game-lbl"   id="gameLbl"></span>
     </div>
   </div>
 
@@ -210,6 +236,8 @@
 
   <!-- GAME -->
   <div id="pg-game" class="page on">
+
+    <!-- Setup (pre-game) -->
     <div class="card" id="setupCard">
       <div class="card-title">Game Setup</div>
       <div class="field"><label>Team</label></div>
@@ -222,6 +250,17 @@
       <button class="btn green" id="startBtn">Start Game</button>
     </div>
 
+    <!-- FIX 1: Game Over card — always shown when gameEnded, with Reset + View Summary -->
+    <div class="card gameover-card hidden" id="gameoverCard">
+      <div class="gameover-title">Game Over</div>
+      <div class="gameover-sub" id="gameoverSub"></div>
+      <div class="row">
+        <button class="btn blue" id="viewSumBtn">📊 View Summary</button>
+        <button class="btn red"  id="resetBtn">↺ New Game</button>
+      </div>
+    </div>
+
+    <!-- In-game controls -->
     <div class="card hidden" id="phaseCard">
       <div class="card-title">Phase</div>
       <div class="phase-row">
@@ -256,7 +295,6 @@
     <div class="card hidden" id="endCard">
       <div class="row">
         <button class="btn red" id="endBtn">End Game</button>
-        <button class="btn"     id="resetBtn">Reset</button>
       </div>
     </div>
   </div>
@@ -378,7 +416,7 @@
 <!-- SUMMARY MODAL -->
 <div class="modal-bg" id="sumModal">
   <div class="modal">
-    <div class="modal-title">Game Summary</div>
+    <div class="modal-title">📊 Game Summary</div>
     <div id="sumMeta" class="modal-sub"></div>
     <div id="sumBody"></div>
     <div class="div"></div>
@@ -416,7 +454,7 @@ async function fbSave(data)  { try { return (await addDoc(collection(db,"games")
 async function fbLoad()      { try { const s=await getDocs(query(collection(db,"games"),orderBy("date","desc"))); return s.docs.map(d=>({...d.data(),_fbId:d.id})); } catch(e) { return []; } }
 async function fbDelete(id)  { try { await deleteDoc(doc(db,"games",id)); } catch(e){} }
 
-// ── TEAMS (fully hardcoded) ───────────────────────────────────
+// ── TEAMS ─────────────────────────────────────────────────────
 const TEAMS = [
   {
     id: "team-1-2",
@@ -439,26 +477,13 @@ const TEAMS = [
     name: "3/4 Team",
     gameType: 11,
     players: [
-      { number:  1, name: "John Doe" },
-      { number:  2, name: "John Doe" },
-      { number:  3, name: "John Doe" },
-      { number:  4, name: "John Doe" },
-      { number:  5, name: "John Doe" },
-      { number:  6, name: "John Doe" },
-      { number:  7, name: "John Doe" },
-      { number:  8, name: "John Doe" },
-      { number:  9, name: "John Doe" },
-      { number: 10, name: "John Doe" },
-      { number: 11, name: "John Doe" },
-      { number: 12, name: "John Doe" },
-      { number: 13, name: "John Doe" },
-      { number: 14, name: "John Doe" },
-      { number: 15, name: "John Doe" },
-      { number: 16, name: "John Doe" },
-      { number: 17, name: "John Doe" },
-      { number: 18, name: "John Doe" },
-      { number: 19, name: "John Doe" },
-      { number: 20, name: "John Doe" },
+      { number:  1, name: "John Doe" },{ number:  2, name: "John Doe" },{ number:  3, name: "John Doe" },
+      { number:  4, name: "John Doe" },{ number:  5, name: "John Doe" },{ number:  6, name: "John Doe" },
+      { number:  7, name: "John Doe" },{ number:  8, name: "John Doe" },{ number:  9, name: "John Doe" },
+      { number: 10, name: "John Doe" },{ number: 11, name: "John Doe" },{ number: 12, name: "John Doe" },
+      { number: 13, name: "John Doe" },{ number: 14, name: "John Doe" },{ number: 15, name: "John Doe" },
+      { number: 16, name: "John Doe" },{ number: 17, name: "John Doe" },{ number: 18, name: "John Doe" },
+      { number: 19, name: "John Doe" },{ number: 20, name: "John Doe" },
     ]
   },
   {
@@ -466,26 +491,13 @@ const TEAMS = [
     name: "5/6 Team",
     gameType: 11,
     players: [
-      { number:  1, name: "John Doe" },
-      { number:  2, name: "John Doe" },
-      { number:  3, name: "John Doe" },
-      { number:  4, name: "John Doe" },
-      { number:  5, name: "John Doe" },
-      { number:  6, name: "John Doe" },
-      { number:  7, name: "John Doe" },
-      { number:  8, name: "John Doe" },
-      { number:  9, name: "John Doe" },
-      { number: 10, name: "John Doe" },
-      { number: 11, name: "John Doe" },
-      { number: 12, name: "John Doe" },
-      { number: 13, name: "John Doe" },
-      { number: 14, name: "John Doe" },
-      { number: 15, name: "John Doe" },
-      { number: 16, name: "John Doe" },
-      { number: 17, name: "John Doe" },
-      { number: 18, name: "John Doe" },
-      { number: 19, name: "John Doe" },
-      { number: 20, name: "John Doe" },
+      { number:  1, name: "John Doe" },{ number:  2, name: "John Doe" },{ number:  3, name: "John Doe" },
+      { number:  4, name: "John Doe" },{ number:  5, name: "John Doe" },{ number:  6, name: "John Doe" },
+      { number:  7, name: "John Doe" },{ number:  8, name: "John Doe" },{ number:  9, name: "John Doe" },
+      { number: 10, name: "John Doe" },{ number: 11, name: "John Doe" },{ number: 12, name: "John Doe" },
+      { number: 13, name: "John Doe" },{ number: 14, name: "John Doe" },{ number: 15, name: "John Doe" },
+      { number: 16, name: "John Doe" },{ number: 17, name: "John Doe" },{ number: 18, name: "John Doe" },
+      { number: 19, name: "John Doe" },{ number: 20, name: "John Doe" },
     ]
   },
 ];
@@ -498,6 +510,7 @@ const S = {
   players:[], snapCount:0, snapHistory:[],
   phase:"offense", activeGrp:"", editGrp:"",
   teamGroups:{}, playLog:[], results:[],
+  lastResult: null,
 };
 const D = { pt:"run", bc:null, rec:null, passRes:null, yards:null, tack:null, tack2:null, defRes:null, onField:[] };
 const GN = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
@@ -518,6 +531,7 @@ function hydrate() {
     S.results    = S.results   ||[];
     S.teamGroups = S.teamGroups||{};
     S.activeGrp  = "";
+    S.lastResult = S.lastResult||null;
   } catch(e){}
 }
 
@@ -535,8 +549,7 @@ const ready  = () => S.gameStarted && !S.gameEnded && selCnt()===S.gameType;
 // ── SELECT TEAM ───────────────────────────────────────────────
 function selectTeam(team) {
   if (S.gameStarted) return;
-  // Keep existing play counts if same team, otherwise fresh start
-  const fresh = team.players.map((p,i) => {
+  const fresh = team.players.map(p => {
     const ex = S.selectedTeamId===team.id && S.players.find(e=>e.number===p.number);
     return ex ? {...ex, selected:false} : { id:`${team.id}-${p.number}`, name:p.name, number:p.number, plays:0, selected:false, absent:false };
   });
@@ -552,7 +565,7 @@ function startGame() {
   if (!S.gameName.trim())           { alert("Enter a game name.");                            return; }
   if (active().length < S.gameType) { alert(`Need at least ${S.gameType} active players.`);  return; }
   if (!confirm("Start the game?"))  return;
-  S.gameStarted=true; S.gameEnded=false; S.snapCount=0; S.playLog=[]; S.snapHistory=[];
+  S.gameStarted=true; S.gameEnded=false; S.snapCount=0; S.playLog=[]; S.snapHistory=[]; S.lastResult=null;
   persist(); render();
 }
 
@@ -570,14 +583,15 @@ async function endGame() {
   const fbId = await fbSave(result);
   if (fbId) result._fbId = fbId;
   S.results.unshift(result);
+  S.lastResult = result;
   persist(); render(); openSum(result);
 }
 
 function resetGame() {
-  if (!confirm("Reset this game?")) return;
+  if (!confirm("Start a new game? This will clear current snap counts.")) return;
   S.players=S.players.map(p=>({...p,plays:0,selected:false}));
   S.snapCount=0; S.gameStarted=false; S.gameEnded=false;
-  S.snapHistory=[]; S.playLog=[]; S.gameName=""; S.activeGrp="";
+  S.snapHistory=[]; S.playLog=[]; S.gameName=""; S.activeGrp=""; S.lastResult=null;
   persist(); render();
 }
 
@@ -643,6 +657,36 @@ function toggleMember(pid) {
   persist(); render();
 }
 
+// ── FIX 2: COMPILE STATS for summary ─────────────────────────
+function compileStats(result) {
+  const snaps  = result.snapCount || 0;
+  const log    = result.playLog   || [];
+  const players= result.players   || [];
+
+  // Participation pct per player
+  const activePl = players.filter(p=>!p.absent);
+  const metGoal  = activePl.filter(p=>p.plays>=5).length;
+  const missedGoal = activePl.filter(p=>p.plays<5&&p.plays>0).length;
+  const zeroPlays  = activePl.filter(p=>p.plays===0).length;
+
+  // Play-type breakdown
+  const offPlays = log.filter(p=>p.phase==="offense");
+  const defPlays = log.filter(p=>p.phase==="defense");
+  const runs     = offPlays.filter(p=>p.pt==="run").length;
+  const passes   = offPlays.filter(p=>p.pt==="pass").length;
+  const specials = offPlays.filter(p=>p.pt==="special").length;
+
+  // Yardage
+  const yardPlays = log.filter(p=>p.yards!==null);
+  const totalYds  = yardPlays.reduce((a,p)=>a+(p.yards||0),0);
+  const offYds    = offPlays.filter(p=>p.yards!==null).reduce((a,p)=>a+(p.yards||0),0);
+  const avgYds    = offPlays.filter(p=>p.yards!==null).length > 0
+    ? (offYds / offPlays.filter(p=>p.yards!==null).length).toFixed(1)
+    : "—";
+
+  return { snaps, metGoal, missedGoal, zeroPlays, activePl, runs, passes, specials, offPlays, defPlays, totalYds, offYds, avgYds };
+}
+
 // ── RENDER ────────────────────────────────────────────────────
 function render() {
   const sel=selCnt(), u5=under5().length, ok=sel===S.gameType, r=ready();
@@ -654,8 +698,9 @@ function render() {
   $("snapBtn").disabled=!r; $("snapBtn").className="snap-big"+(r?" ready":"");
   const team=TEAMS.find(t=>t.id===S.selectedTeamId);
   $("gameLbl").textContent=S.gameName||(team?team.name:"")||"";
-  $("livePill").classList.toggle("show",S.gameStarted&&!S.gameEnded);
-  $("snapHelp").textContent=!S.selectedTeamId?"Select a team to get started.":!S.gameStarted?"Select team & start game.":S.gameEnded?"Game over — check Saved tab.":!r?`Select ${S.gameType} players to snap.`:"Ready — tap SNAP.";
+  $("livePill").classList.toggle("show",  S.gameStarted&&!S.gameEnded);
+  $("endedPill").classList.toggle("show", S.gameEnded);
+  $("snapHelp").textContent=!S.selectedTeamId?"Select a team to get started.":!S.gameStarted?"Select team & start game.":S.gameEnded?"Game ended — tap New Game to reset.":!r?`Select ${S.gameType} players to snap.`:"Ready — tap SNAP.";
 
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===S.page));
   ["game","roster","log","saved"].forEach(p=>$(`pg-${p}`).classList.toggle("on",S.page===p));
@@ -668,15 +713,24 @@ function render() {
 
 function renderGame() {
   const started=S.gameStarted, ended=S.gameEnded;
-  $("setupCard").classList.toggle("hidden", started);
-  $("phaseCard").classList.toggle("hidden", !started||ended);
-  $("groupCard").classList.toggle("hidden", !started||ended);
+
+  // FIX 1: Show/hide cards correctly
+  $("setupCard").classList.toggle("hidden",  started);
+  $("gameoverCard").classList.toggle("hidden", !ended);        // always show when ended
+  $("phaseCard").classList.toggle("hidden",   !started||ended);
+  $("groupCard").classList.toggle("hidden",   !started||ended);
   $("playersCard").classList.toggle("hidden", !started||ended);
-  $("endCard").classList.toggle("hidden", !started||ended);
+  $("endCard").classList.toggle("hidden",     !started||ended);
+
+  if (ended && S.lastResult) {
+    const st = compileStats(S.lastResult);
+    $("gameoverSub").textContent = `${S.gameName} · ${S.snapCount} snaps · ${st.metGoal}/${st.activePl.length} players met goal`;
+  } else if (ended) {
+    $("gameoverSub").textContent = `${S.gameName} · ${S.snapCount} snaps`;
+  }
 
   if (!started) {
     $("gameNameIn").value=S.gameName;
-    // Team cards
     $("teamCards").innerHTML="";
     TEAMS.forEach(team=>{
       const c=document.createElement("div");
@@ -687,6 +741,8 @@ function renderGame() {
     });
     return;
   }
+
+  if (ended) return; // Don't render in-game UI if ended
 
   document.querySelectorAll(".phase-btn").forEach(b=>b.classList.toggle("on",b.dataset.phase===S.phase));
   document.querySelectorAll("#loadChips .chip").forEach(c=>c.classList.toggle("on",c.dataset.grp===S.activeGrp));
@@ -777,19 +833,106 @@ function buildSPGrid(cid, players, dk) {
   });
 }
 
+// ── FIX 2: ENHANCED SUMMARY MODAL ────────────────────────────
 function openSum(result) {
-  $("sumMeta").textContent=`${result.gameName} · ${result.teamName} · ${new Date(result.date).toLocaleDateString()} · ${result.snapCount} snaps`;
-  const sorted=[...result.players].sort((a,b)=>Number(a.absent)-Number(b.absent)||a.plays-b.plays);
-  $("sumBody").innerHTML=sorted.map(p=>`<div class="sum-row ${p.absent?"":p.plays>=5?"met":"missed"}"><span><strong>#${p.number}</strong> ${esc(p.name)}${p.absent?" (Absent)":""}</span><span>${p.absent?"—":p.plays+" plays "+(p.plays>=5?"✅":"❌")}</span></div>`).join("");
+  const st = compileStats(result);
+  const total = result.snapCount;
+
+  $("sumMeta").textContent=`${result.gameName} · ${result.teamName} · ${new Date(result.date).toLocaleDateString()}`;
+
+  let html = "";
+
+  // Top stat boxes
+  html += `<div class="sum-stats-grid">
+    <div class="sum-stat-box"><div class="v">${total}</div><div class="l">Total Snaps</div></div>
+    <div class="sum-stat-box"><div class="v" style="color:var(--green)">${st.metGoal}</div><div class="l">Met Goal (5+)</div></div>
+    <div class="sum-stat-box"><div class="v" style="color:var(--red)">${st.missedGoal + st.zeroPlays}</div><div class="l">Under Goal</div></div>
+  </div>`;
+
+  // Play type breakdown (only if we have play log data)
+  if (result.playLog && result.playLog.length > 0) {
+    const offTotal = st.offPlays.length;
+    const defTotal = st.defPlays.length;
+    html += `<div class="sum-section-title">Play Breakdown</div>`;
+    html += `<div class="sum-stats-grid">
+      <div class="sum-stat-box"><div class="v" style="color:var(--red)">${offTotal}</div><div class="l">⚡ Offense</div></div>
+      <div class="sum-stat-box"><div class="v" style="color:var(--green)">${defTotal}</div><div class="l">🛡 Defense</div></div>
+      <div class="sum-stat-box"><div class="v">${st.avgYds}</div><div class="l">Avg Yds/Play</div></div>
+    </div>`;
+    if (offTotal > 0) {
+      html += `<div class="sum-stats-grid">
+        <div class="sum-stat-box"><div class="v">${st.runs}</div><div class="l">🏃 Runs</div></div>
+        <div class="sum-stat-box"><div class="v">${st.passes}</div><div class="l">🏈 Passes</div></div>
+        <div class="sum-stat-box"><div class="v">${st.specials}</div><div class="l">⭐ Special</div></div>
+      </div>`;
+    }
+    html += `<div class="sum-stats-grid">
+      <div class="sum-stat-box" style="grid-column:1/-1"><div class="v" style="color:var(--amber)">${st.offYds >= 0 ? "+" : ""}${st.offYds}</div><div class="l">Total Offensive Yards</div></div>
+    </div>`;
+  }
+
+  // Player participation bars
+  html += `<div class="sum-section-title">Player Participation</div>`;
+  const sorted = [...result.players].sort((a,b) => Number(a.absent)-Number(b.absent) || b.plays-a.plays);
+  sorted.forEach(p => {
+    if (p.absent) {
+      html += `<div class="sum-row"><span><strong>#${p.number}</strong> ${esc(p.name)} <span style="color:var(--muted);font-size:11px">(Absent)</span></span><span style="color:var(--muted)">—</span></div>`;
+      return;
+    }
+    const pct = total > 0 ? Math.round((p.plays / total) * 100) : 0;
+    const fillClass = pct >= 50 ? "" : pct >= 25 ? "mid" : "low";
+    const metIcon = p.plays >= 5 ? "✅" : "❌";
+    html += `
+      <div class="participation-bar-wrap">
+        <div class="participation-bar-label">
+          <span class="name"><strong>#${p.number}</strong> ${esc(p.name)}</span>
+          <span class="pct">${p.plays} snaps · ${pct}% ${metIcon}</span>
+        </div>
+        <div class="participation-bar-bg">
+          <div class="participation-bar-fill ${fillClass}" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  });
+
+  $("sumBody").innerHTML = html;
   $("sumModal").classList.add("show");
 }
 
 function openView(result) {
   $("viewTitle").textContent=result.gameName;
   $("viewMeta").textContent=`${result.teamName?result.teamName+" · ":""}${new Date(result.date).toLocaleDateString()} · ${result.snapCount} snaps`;
+
+  const st = compileStats(result);
+  const total = result.snapCount;
+
+  let html = `<div class="sum-stats-grid">
+    <div class="sum-stat-box"><div class="v">${total}</div><div class="l">Snaps</div></div>
+    <div class="sum-stat-box"><div class="v" style="color:var(--green)">${st.metGoal}</div><div class="l">Met Goal</div></div>
+    <div class="sum-stat-box"><div class="v" style="color:var(--red)">${st.missedGoal + st.zeroPlays}</div><div class="l">Under Goal</div></div>
+  </div>`;
+
+  html += `<div class="sum-section-title">Player Snaps</div>`;
   const sorted=[...result.players].sort((a,b)=>a.plays-b.plays);
-  let html=sorted.map(p=>`<div class="sum-row ${p.absent?"":p.plays>=5?"met":"missed"}"><span><strong>#${p.number}</strong> ${esc(p.name)}</span><span>${p.absent?"Absent":p.plays+" plays"}</span></div>`).join("");
-  if (result.playLog&&result.playLog.length) {
+  sorted.forEach(p => {
+    const pct = total > 0 ? Math.round((p.plays / total) * 100) : 0;
+    if (p.absent) {
+      html += `<div class="sum-row"><span><strong>#${p.number}</strong> ${esc(p.name)}</span><span style="color:var(--muted)">Absent</span></div>`;
+    } else {
+      const fillClass = pct >= 50 ? "" : pct >= 25 ? "mid" : "low";
+      html += `
+        <div class="participation-bar-wrap" style="margin-bottom:6px">
+          <div class="participation-bar-label">
+            <span class="name"><strong>#${p.number}</strong> ${esc(p.name)}</span>
+            <span class="pct">${p.plays} snaps · ${pct}% ${p.plays>=5?"✅":"❌"}</span>
+          </div>
+          <div class="participation-bar-bg">
+            <div class="participation-bar-fill ${fillClass}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }
+  });
+
+  if (result.playLog && result.playLog.length) {
     html+=`<div class="slbl" style="margin-top:14px;">Play Log</div>`;
     html+=result.playLog.map(pl=>{
       const yc=pl.yards===null?"zero":pl.yards>0?"pos":"neg";
@@ -804,7 +947,10 @@ function openView(result) {
 // ── EVENTS ────────────────────────────────────────────────────
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{ S.page=t.dataset.tab; render(); persist(); });
 $("gameNameIn").oninput=e=>{ S.gameName=e.target.value; persist(); };
-$("startBtn").onclick=startGame; $("endBtn").onclick=endGame; $("resetBtn").onclick=resetGame;
+$("startBtn").onclick=startGame;
+$("endBtn").onclick=endGame;
+$("resetBtn").onclick=resetGame;
+$("viewSumBtn").onclick=()=>{ if(S.lastResult) openSum(S.lastResult); };
 $("undoBtn").onclick=undoSnap;
 $("clearBtn").onclick=()=>{ S.players=S.players.map(p=>({...p,selected:false})); S.activeGrp=""; persist(); render(); };
 $("snapBtn").onclick=pressSnap;
