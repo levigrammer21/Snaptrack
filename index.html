@@ -102,6 +102,26 @@
     .phase-btn.off.on { background: var(--red-dim);   border-color: var(--red);   color: var(--red); }
     .phase-btn.def.on { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 
+
+    .group-tools {
+      display: flex;
+      gap: 8px;
+      margin: -2px 0 10px;
+    }
+    .group-tools .btn {
+      min-height: 36px;
+      font-size: 11px;
+    }
+    .chip .small-hint {
+      display: block;
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 1px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
     .chips { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-bottom: 10px; }
     .chip { background: var(--surf2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 800; padding: 7px 2px; cursor: pointer; text-align: center; text-transform: uppercase; transition: all .1s; }
     .chip.on { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
@@ -123,6 +143,16 @@
 
     .div  { height: 1px; background: var(--border); margin: 10px 0; }
     .slbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 10px 0 6px; }
+    .save-note {
+      font-size: 11px;
+      color: var(--green);
+      font-weight: 800;
+      text-align: center;
+      min-height: 18px;
+      margin: -2px 0 8px;
+      opacity: .95;
+    }
+
     .note { font-size: 12px; color: var(--muted); text-align: center; padding: 14px 0; }
     .badge { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; margin-right: 3px; }
     .badge.blue  { background: var(--blue-dim);  color: var(--blue); }
@@ -618,6 +648,11 @@
         <button class="chip" data-egrp="special">SPL</button>
         <button class="chip" data-egrp="secondTeam">2ND</button>
       </div>
+      <div class="group-tools">
+        <button class="btn blue" id="renameGroupBtn">Rename Selected Group</button>
+        <button class="btn" id="resetGroupNamesBtn">Reset Names</button>
+      </div>
+      <div class="save-note" id="groupSaveNote"></div>
       <div id="grpProgress" class="grp-progress hidden">
         <div>
           <div class="label" id="grpProgLabel">Selected</div>
@@ -833,10 +868,10 @@ const TEAMS = [
     players: [
       { number:  0, name: "Jelani Drew" },
       { number:  1, name: "Jorden McElvany" },
-      { number:  2, name: "Zayn Sanders" },
       { number:  3, name: "Lincoln Eskridge" },
       { number:  4, name: "Brock Monson" },
       { number:  5, name: "Braxton Bailey" },
+      { number:  6, name: "Zayn Sanders" },
       { number:  7, name: "Gunner Williams" },
       { number:  8, name: "Evan Grammer" },
       { number:  9, name: "Rollin Sanders" },
@@ -884,13 +919,77 @@ const S = {
   gameName:"", gameType:8, selectedTeamId:null,
   players:[], snapCount:0, snapHistory:[],
   phase:"offense", activeGrp:"", editGrp:"",
-  teamGroups:{}, playLog:[], results:[],
+  teamGroups:{}, groupLabels:{offense:"OFF",defense:"DEF",kickoff:"KO",kickReturn:"KR",special:"SPL",secondTeam:"2ND"}, playLog:[], results:[],
   lastResult: null,
   logView: "summary",      // "summary" | "chrono"
   tutorialSeen: false,     // first-run flag
 };
 const D = { pt:"run", bc:null, rec:null, passRes:null, yards:null, tack:null, tack2:null, defRes:null, onField:[] };
 const GN = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
+
+const GROUP_DEFAULTS = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
+
+function grpLabel(g){
+  S.groupLabels = {...GROUP_DEFAULTS, ...(S.groupLabels||{})};
+  return S.groupLabels[g] || GROUP_DEFAULTS[g] || g;
+}
+
+function normalizeGroupsForTeam(teamId){
+  if(!teamId) return;
+  S.teamGroups = S.teamGroups || {};
+  const base = { offense:[], defense:[], kickoff:[], kickReturn:[], special:[], secondTeam:[] };
+  const existing = S.teamGroups[teamId] || {};
+  S.teamGroups[teamId] = {...base, ...existing};
+}
+
+function groupMemberKey(p){
+  return p?.id || `${p.number}|${p.name}`;
+}
+
+function groupIncludesPlayer(arr, p){
+  const key = groupMemberKey(p);
+  return (arr||[]).includes(key) || (arr||[]).includes(p.name);
+}
+
+function cleanGroupMembers(teamId){
+  normalizeGroupsForTeam(teamId);
+  const valid = new Set((S.players||[]).map(groupMemberKey));
+  Object.keys(S.teamGroups[teamId]).forEach(g=>{
+    S.teamGroups[teamId][g] = (S.teamGroups[teamId][g]||[])
+      .map(item=>{
+        const byName = (S.players||[]).find(p=>p.name===item);
+        return byName ? groupMemberKey(byName) : item;
+      })
+      .filter(item=>valid.has(item));
+  });
+}
+
+function flashGroupSaved(){
+  const el = $("groupSaveNote");
+  if(!el) return;
+  el.textContent = `Saved to ${S.editGrp ? grpLabel(S.editGrp) : "group"}`;
+  clearTimeout(window.__groupSaveTimer);
+  window.__groupSaveTimer = setTimeout(()=>{ if($("groupSaveNote")) $("groupSaveNote").textContent=""; }, 1400);
+}
+
+function renameSelectedGroup(){
+  if(!S.editGrp) return alert("Select a group first.");
+  const label = prompt("Group name", grpLabel(S.editGrp));
+  if(!label || !label.trim()) return;
+  S.groupLabels[S.editGrp] = label.trim().slice(0, 12).toUpperCase();
+  persist();
+  flashGroupSaved();
+  render();
+}
+
+function resetGroupNames(){
+  if(!confirm("Reset group names to OFF, DEF, KO, KR, SPL, 2ND?")) return;
+  S.groupLabels = {...GROUP_DEFAULTS};
+  persist();
+  flashGroupSaved();
+  render();
+}
+
 
 const $   = id => document.getElementById(id);
 
@@ -954,7 +1053,10 @@ function authReady(){
 const esc = s  => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
 function persist() {
-  try { localStorage.setItem(LS, JSON.stringify({...S, players:S.players.map(p=>({...p,selected:false}))})); } catch(e){}
+  try {
+    const cleanPlayers = S.players.map(p=>({...p,selected:false}));
+    localStorage.setItem(LS, JSON.stringify({...S, players:cleanPlayers, teamGroups:S.teamGroups||{}, groupLabels:S.groupLabels||{}}));
+  } catch(e){}
 }
 function hydrate() {
   try {
@@ -965,6 +1067,8 @@ function hydrate() {
     S.playLog    = S.playLog   ||[];
     S.results    = S.results   ||[];
     S.teamGroups = S.teamGroups||{};
+    S.groupLabels = {...GROUP_DEFAULTS, ...(S.groupLabels||{})};
+    if(S.selectedTeamId) normalizeGroupsForTeam(S.selectedTeamId);
     S.activeGrp  = "";
     S.lastResult = S.lastResult||null;
     S.logView    = S.logView   ||"summary";
@@ -974,7 +1078,8 @@ function hydrate() {
 
 function getGroups() {
   if (!S.selectedTeamId) return { offense:[], defense:[], kickoff:[], kickReturn:[], special:[], secondTeam:[] };
-  if (!S.teamGroups[S.selectedTeamId]) S.teamGroups[S.selectedTeamId] = { offense:[], defense:[], kickoff:[], kickReturn:[], special:[], secondTeam:[] };
+  normalizeGroupsForTeam(S.selectedTeamId);
+  cleanGroupMembers(S.selectedTeamId);
   return S.teamGroups[S.selectedTeamId];
 }
 
@@ -994,6 +1099,8 @@ function selectTeam(team) {
   S.players        = fresh;
   S.gameType       = team.gameType;
   S.selectedTeamId = team.id;
+  normalizeGroupsForTeam(team.id);
+  cleanGroupMembers(team.id);
   persist(); render();
 }
 
@@ -1088,16 +1195,17 @@ function undoSnap() {
 
 // ── GROUPS ────────────────────────────────────────────────────
 function loadGroup(key) {
-  const names=new Set(getGroups()[key]||[]);
-  S.players=S.players.map(p=>({...p,selected:!p.absent&&names.has(p.name)}));
+  const arr = getGroups()[key] || [];
+  S.players = S.players.map(p=>({...p,selected:!p.absent&&groupIncludesPlayer(arr,p)}));
   S.activeGrp=key; persist(); render();
 }
 function toggleMember(pid) {
   const p=S.players.find(x=>x.id===pid);
   if (!p||!S.editGrp) return;
-  const grps=getGroups(), arr=grps[S.editGrp]||[];
-  grps[S.editGrp]=arr.includes(p.name)?arr.filter(n=>n!==p.name):[...arr,p.name];
-  persist(); render();
+  const grps=getGroups(), arr=grps[S.editGrp]||[], key=groupMemberKey(p);
+  grps[S.editGrp]=groupIncludesPlayer(arr,p)?arr.filter(n=>n!==key&&n!==p.name):[...arr,key];
+  cleanGroupMembers(S.selectedTeamId);
+  persist(); flashGroupSaved(); render();
 }
 
 // ── COMPILE STATS ─────────────────────────────────────────────
@@ -1305,7 +1413,7 @@ function renderGame() {
 function renderRoster() {
   const grps=getGroups();
   document.querySelectorAll("[data-egrp]").forEach(b=>b.classList.toggle("on",b.dataset.egrp===S.editGrp));
-  $("editStatus").textContent=S.editGrp?`Editing ${GN[S.editGrp]} — tap players to add/remove`:"Select a group to edit.";
+  $("editStatus").textContent=S.editGrp?`Editing ${grpLabel(S.editGrp)} — tap players to add/remove`:"Select a group to edit.";
 
   // Group-build progress indicator
   if (S.editGrp && S.players.length) {
@@ -1314,7 +1422,7 @@ function renderRoster() {
     const met = count === target;
     $("grpProgress").classList.remove("hidden");
     $("grpProgress").classList.toggle("target-met", met);
-    $("grpProgLabel").textContent = `${GN[S.editGrp]} Group${met ? " — Ready ✓" : ""}`;
+    $("grpProgLabel").textContent = `${grpLabel(S.editGrp)} Group${met ? " — Ready ✓" : ""}`;
     $("grpProgCount").innerHTML = `${count}<span class="target">/${target}</span>`;
   } else {
     $("grpProgress").classList.add("hidden");
@@ -1323,7 +1431,7 @@ function renderRoster() {
   $("rosterPlayers").innerHTML="";
   if (!S.players.length) { $("rosterPlayers").innerHTML='<div class="note">Select a team first.</div>'; return; }
   S.players.forEach(p=>{
-    const inG=S.editGrp&&(grps[S.editGrp]||[]).includes(p.name);
+    const inG=S.editGrp&&groupIncludesPlayer((grps[S.editGrp]||[]), p);
     const tags=Object.entries(GN).filter(([k])=>(grps[k]||[]).includes(p.name)).map(([,v])=>v);
     const c=document.createElement("div");
     c.className="p-card"+(inG?" ingrp":"")+(p.absent?" absent":"");
@@ -1714,6 +1822,8 @@ $("tutNextBtn").onclick=()=>{ if (tutStep < TUT_STEPS.length-1) { tutStep++; ren
 $("tutBackBtn").onclick=()=>{ if (tutStep > 0) { tutStep--; renderTut(); } };
 $("tutSkipBtn").onclick=closeTutorial;
 $("tutHelpBtn").onclick=()=>openTutorial(true);
+if($("renameGroupBtn")) $("renameGroupBtn").onclick=renameSelectedGroup;
+if($("resetGroupNamesBtn")) $("resetGroupNamesBtn").onclick=resetGroupNames;
 $("tutBg").onclick=e=>{ if(e.target===$("tutBg")) closeTutorial(); };
 
 // ── BOOT ──────────────────────────────────────────────────────
