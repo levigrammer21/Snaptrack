@@ -3,14 +3,19 @@ import { gameStats, seasonStats, boxscoreHtml, gameCsv, seasonCsv, download } fr
 import { renderAdmin, addManualUser } from './admin.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const VERSION='v1.0 Dream';
+const VERSION='v1.0.1 Dream';
 const colors=['#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2'];
 const baseGroups={offense:{name:'Offense',color:'#2563eb',players:[]},defense:{name:'Defense',color:'#16a34a',players:[]},kickoff:{name:'Kickoff',color:'#d97706',players:[]},kickReturn:{name:'Kick Return',color:'#0891b2',players:[]},special:{name:'Special',color:'#7c3aed',players:[]},secondTeam:{name:'2nd Team',color:'#64748b',players:[]}};
 const ROSTERS={
- '1/2':[ ['1','Legend Lowe'],['2','Jett Rowe'],['3','Dax Johnson'],['4','Gunner Brown'],['5','Krew Smith'],['6','Urban Hall'],['7','Ronin Massey'],['8','Brooks Grill'],['9','Tucker Lee'],['10','Beau Miller'],['11','Maddox Clark'],['12','Kash Adams'],['13','Knox Reed'],['14','Crew Williams'],['15','Baylor Hill'],['16','Rhett Davis'],['17','Wes Baker'],['18','Easton King'],['19','Hudson Cox'],['20','Ace Young'] ],
- '3/4':[ ['1','Brody Allen'],['2','Carter James'],['3','Mason Brooks'],['4','Cooper Hayes'],['5','Wyatt Stone'],['6','Owen Parks'],['7','Liam White'],['8','Hudson Gray'],['9','Jaxon Reed'],['10','Nolan West'],['11','Grayson Ford'],['12','Levi Thomas'],['13','Miles King'],['14','Eli Wright'],['15','Kane Scott'],['16','Luke Wilson'] ],
+ '1/2':[
+  ['7','Ronin Massey'],['8','Brooks Grill'],['11','Legend Griffin'],['14','Urban Niemann'],['16','Carson Russell'],['18','Kace Hilbert'],['21','Reid Grammer'],['22','Caston Hamilton'],['24','Niko Grant'],['30','Dalton Gonzales'],['40','Ledger Johnson'],['42','Reece Fasching'],['55','Russ Pearman'],['66','Dillon Campbell'],['67','Jamesyn Cullum'],['93','Phoneix Brackeen'],['99','Waylon Lyon']
+ ],
+ '3/4':[
+  ['0','Jelani Drew'],['1','Jorden McElvany'],['3','Lincoln Eskridge'],['4','Brock Monson'],['5','Braxton Bailey'],['6','Zayn Sanders'],['7','Gunner Williams'],['8','Evan Grammer'],['9','Rollin Sanders'],['10','Landry Eskridge'],['11','Gaviston Clark'],['13','Sawyer Redd'],['15','Jessen Cullum'],['17','Colton Meadows'],['18','Ellis Seward'],['20','Kayden Williams'],['21','Carter McElvany'],['22','Liam George'],['25','Jaxon Beck'],['27','Conrad Pennington'],['28','Logan Wells'],['33','Logan Grotts'],['37','Purpose Birchmier'],['41','Carson Burleson'],['44','Jaiden Palmer'],['67','James Wright'],['89','Jasper Maples'],['93','Boston McKnight'],['99','Kaydin Mash']
+ ],
  '5/6':[ ['1','Aiden Turner'],['2','Brayden Lewis'],['3','Camden Moore'],['4','Declan Ross'],['5','Emmett Ward'],['6','Finn Hughes'],['7','Gavin Price'],['8','Hayden Bell'],['9','Isaac Coleman'],['10','Jack Morgan'],['11','Kai Bennett'],['12','Logan Foster'],['13','Myles Perry'],['14','Noah Sanders'],['15','Parker Wood'],['16','Ryder Green'] ]
 };
+
 function roster(team){return (ROSTERS[team]||[]).map((r,i)=>({id:`${team}-${r[0]}`,num:r[0],name:r[1],absent:false,idx:i}));}
 let state={user:null,access:null,accessCache:{},games:[],team:'1/2',page:'game',phase:'offense',mode:'game',current:null,selected:new Set(),groups:structuredClone(baseGroups),editGroup:'offense',logView:'summary',dirty:false,lastCloudUpdate:null,unsubGame:null,stat:{}};
 
