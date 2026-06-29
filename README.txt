@@ -1,4 +1,4 @@
-SnapTrack v1.0 Dream
+SnapTrack v1.0.2
 
 Upload every file in this zip to the ROOT of your GitHub Pages directory:
 index.html
