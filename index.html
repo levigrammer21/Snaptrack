@@ -1,4 +1,4 @@
-<!-- v7.4 surgical cloud save: admin access + dashboard + boxscore + sun mode -->
+<!-- v7.8 surgical: export + quick undo + tackle validation + conflict warning + sun polish -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -547,6 +547,27 @@
     .avatar { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--green-dim); border:1px solid rgba(34,197,94,.25); font-size:21px; flex-shrink:0; }
     .admin-user-copy { min-width:0; flex:1; }
     .access-btn.on { background:var(--green); color:#0d0f14; border-color:var(--green); }
+
+    .snap-undo { width: 64px; min-height: 62px; border-radius: 12px; border:1px solid var(--border); background:var(--surf2); color:var(--amber); font-family:'DM Sans',sans-serif; font-size:11px; font-weight:900; text-transform:uppercase; cursor:pointer; }
+    .snap-undo:disabled { opacity:.28; pointer-events:none; }
+    .app-version { text-align:center; color:var(--muted); font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; margin:8px 0 2px; opacity:.75; }
+    .export-row { display:flex; gap:8px; margin:8px 0 10px; }
+    .export-row .btn { min-height:36px; font-size:11px; }
+    .conflict-note { background:var(--amber-dim); border:1px solid rgba(245,158,11,.45); color:var(--amber); border-radius:12px; padding:10px 12px; font-size:12px; font-weight:800; margin-bottom:10px; }
+    .box-table { width:100%; border-collapse:separate; border-spacing:0 6px; font-size:12px; }
+    .box-table th { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:.08em; text-align:right; padding:2px 5px; }
+    .box-table th:first-child, .box-table td:first-child { text-align:left; }
+    .box-table td { background:var(--surf2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:8px 5px; text-align:right; font-weight:800; }
+    .box-table td:first-child { border-left:1px solid var(--border); border-radius:10px 0 0 10px; }
+    .box-table td:last-child { border-right:1px solid var(--border); border-radius:0 10px 10px 0; }
+    body.sunny { --bg:#f6f0d5; --surf:#fffdf4; --surf2:#fff6cf; --border:#b78926; --text:#15110a; --muted:#594d38; --blue:#005fd1; --blue-dim:rgba(0,95,209,.18); --green:#007a35; --green-dim:rgba(0,122,53,.16); --red:#bd1616; --red-dim:rgba(189,22,22,.14); --amber:#9a5a00; --amber-dim:rgba(154,90,0,.2); }
+    body.sunny html, body.sunny { background:#f6f0d5; }
+    body.sunny .app { background:#f6f0d5; }
+    body.sunny .card, body.sunny .tabs, body.sunny .sync-card, body.sunny .modal, body.sunny .gi, body.sunny .p-card, body.sunny .team-card, body.sunny .pl-summary, body.sunny .team-totals { box-shadow:0 2px 0 rgba(0,0,0,.08); }
+    body.sunny .snap-bar { background:rgba(255,250,224,.98); border-top:2px solid #b78926; }
+    body.sunny .snap-big.ready { color:#041107; box-shadow:0 0 0 3px rgba(0,122,53,.22); }
+    body.sunny .snap-big:not(.ready), body.sunny .snap-undo { background:#fff3bf; color:#4c412c; border-color:#b78926; }
+
     .hidden { display: none !important; }
     @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
     .pop { animation: pop .18s ease; }
@@ -581,7 +602,7 @@
     <button class="auth-link" id="forgotBtn" type="button">Forgot password?</button>
   </div>
 
-  <div class="auth-version">SnapTrack · v7.4 Cloud Save</div>
+  <div class="auth-version">SnapTrack · v7.8</div>
 </div>
 
 <div class="app">
@@ -620,6 +641,8 @@
   <div class="tut-help-row">
     <button class="tut-help-btn" id="tutHelpBtn">? Show Tutorial</button>
   </div>
+
+  <div class="app-version">SnapTrack v7.8</div>
 
   <div class="sync-card saved" id="syncCard">
     <span id="syncStatus">Cloud ready</span>
@@ -769,6 +792,7 @@
       <div class="snap-box"><div class="v" id="snapFieldV" style="color:var(--amber)">0/8</div><div class="l">Field</div></div>
       <div class="snap-box"><div class="v" id="snapUnderV" style="color:var(--red)">0</div><div class="l">Under 5</div></div>
     </div>
+    <button class="snap-undo" id="quickUndoBtn" type="button" disabled>↩ Undo</button>
     <button class="snap-big" id="snapBtn" disabled>SNAP</button>
     <div class="snap-total"><div class="v" id="snapTotalV">0</div><div class="l">Snaps</div></div>
   </div>
@@ -1034,6 +1058,7 @@ const S = {
   currentUserAccess: {},
   adminUsers: [],
   dashboardTeam: "all",
+  lastConflictText: "",
 };
 const D = { pt:"run", bc:null, rec:null, passRes:null, yards:null, tack:null, tack2:null, defRes:null, onField:[] };
 const GN = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
@@ -1129,7 +1154,7 @@ function renameSelectedGroup(){
   const colorKey = emailKey(picked || grpColorKey(S.editGrp));
   S.groupLabels[S.editGrp] = label.trim().slice(0, 14).toUpperCase();
   if(GROUP_COLOR_MAP[colorKey]) S.groupColors[S.editGrp] = colorKey;
-  persist();
+  persist("presets");
   flashGroupSaved();
   render();
 }
@@ -1138,7 +1163,7 @@ function resetGroupNames(){
   if(!confirm("Reset group names/colors to defaults?")) return;
   S.groupLabels = {...GROUP_DEFAULTS};
   S.groupColors = {...GROUP_COLOR_DEFAULTS};
-  persist();
+  persist("presets");
   flashGroupSaved();
   render();
 }
@@ -1236,15 +1261,21 @@ function renderSyncStatus() {
   const card=$("syncCard"), label=$("syncStatus"), btn=$("manualSaveBtn");
   if(!card || !label || !btn) return;
   card.className = "sync-card " + (S.cloudSaveState || "saved");
-  label.textContent = S.cloudSaveText || "Cloud ready";
+  const conflict = currentConflict ? currentConflict() : "";
+  label.textContent = conflict || S.cloudSaveText || "Cloud ready";
+  if(conflict) card.className = "sync-card unsaved";
   btn.disabled = S.cloudSaveState === "saving" || !auth.currentUser;
 }
 let saveTimer=null, saveBusy=false, saveAgain=false;
-function persist(reason="state") {
+function persist(reason="ui") {
+  // Only cloud-save game-changing events. Normal navigation/taps/searches should not write.
+  const cloudReasons = new Set(["start","snap","undo","reset","presets"]);
+  if(!cloudReasons.has(reason)) return;
   if(!auth.currentUser) return;
   markSync("unsaved", navigator.onLine ? "Unsaved changes" : "Offline — will save when service returns");
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>flushSave(reason), 650);
+  const delay = reason === "snap" ? 300 : 650;
+  saveTimer=setTimeout(()=>flushSave(reason), delay);
 }
 async function flushSave(reason="manual") {
   if(!auth.currentUser) return;
@@ -1287,6 +1318,7 @@ async function hydrateCloud() {
   markSync("saved", S.activeCloudGames.length ? `${S.activeCloudGames.length} live cloud game${S.activeCloudGames.length===1?"":"s"} available` : "Cloud ready");
 }
 window.addEventListener("online", ()=>flushSave("online"));
+window.addEventListener("focus", async()=>{ if(auth.currentUser){ S.activeCloudGames=await fbLoadActive(); renderSyncStatus(); } });
 function hydrate() { /* Local game storage intentionally disabled; live games and presets load from Firestore after sign-in. */ }
 
 
@@ -1320,10 +1352,15 @@ function selectTeam(team) {
 }
 
 // ── GAME ──────────────────────────────────────────────────────
-function startGame() {
+async function startGame() {
   if (!S.selectedTeamId)            { alert("Select a team first.");                         return; }
   if (!S.gameName.trim())           { alert("Enter a game name.");                            return; }
   if (active().length < S.gameType) { alert(`Need at least ${S.gameType} active players.`);  return; }
+  try {
+    S.activeCloudGames = await fbLoadActive();
+    const other=(S.activeCloudGames||[]).find(g=>(g.selectedTeamId||g._activeId)===S.selectedTeamId && !g.gameEnded);
+    if(other && !confirm(`There is already a LIVE ${teamShort(S.selectedTeamId)} game in the cloud with ${other.snapCount||0} snaps. Continue anyway?`)) return;
+  } catch(e){}
   if (!confirm("Start the game?"))  return;
   S.gameStarted=true; S.gameEnded=false; S.snapCount=0; S.playLog=[]; S.snapHistory=[]; S.lastResult=null;
   persist("start"); render();
@@ -1354,7 +1391,7 @@ function resetGame() {
   S.players=S.players.map(p=>({...p,plays:0,selected:false}));
   S.snapCount=0; S.gameStarted=false; S.gameEnded=false;
   S.snapHistory=[]; S.playLog=[]; S.gameName=""; S.activeGrp=""; S.lastResult=null;
-  persist(); render();
+  persist("reset"); render();
 }
 
 // ── SNAP ──────────────────────────────────────────────────────
@@ -1366,12 +1403,14 @@ function pressSnap() {
 }
 
 function commitSnap(skip) {
+  if(!skip && S.phase==="defense" && D.tack2 && !D.tack){ alert("Pick the main tackler before adding an assist."); return; }
+  if(!skip && S.phase==="defense" && D.tack && D.tack2===D.tack){ alert("Assist must be a different player."); return; }
   S.players=S.players.map(p=>D.onField.includes(p.id)?{...p,plays:p.plays+1}:p);
   S.snapHistory.push([...D.onField]); S.snapCount++;
   if (!skip) S.playLog.unshift(buildPlay());
   if (navigator.vibrate) navigator.vibrate(55);
   $("snapBtn").classList.add("pop"); setTimeout(()=>$("snapBtn").classList.remove("pop"),180);
-  closeStatModal(); persist(); render();
+  closeStatModal(); persist("snap"); render();
 }
 
 function buildPlay() {
@@ -1407,7 +1446,7 @@ function undoSnap() {
   S.players=S.players.map(p=>last.includes(p.id)?{...p,plays:Math.max(0,p.plays-1)}:p);
   S.snapCount=Math.max(0,S.snapCount-1);
   if (S.playLog.length) S.playLog.shift();
-  persist(); render();
+  persist("undo"); render();
 }
 
 // ── GROUPS ────────────────────────────────────────────────────
@@ -1422,7 +1461,7 @@ function toggleMember(pid) {
   const grps=getGroups(), arr=grps[S.editGrp]||[], key=groupMemberKey(p);
   grps[S.editGrp]=groupIncludesPlayer(arr,p)?arr.filter(n=>n!==key&&n!==p.name):[...arr,key];
   cleanGroupMembers(S.selectedTeamId);
-  persist(); flashGroupSaved(); render();
+  persist("presets"); flashGroupSaved(); render();
 }
 
 // ── COMPILE STATS ─────────────────────────────────────────────
@@ -1566,6 +1605,7 @@ function render() {
   $("snapFieldV").textContent=`${sel}/${S.gameType}`; $("snapFieldV").style.color=ok?"var(--green)":"var(--amber)";
   $("snapUnderV").textContent=u5; $("snapTotalV").textContent=S.snapCount;
   $("snapBtn").disabled=!r; $("snapBtn").className="snap-big"+(r?" ready":"");
+  if($("quickUndoBtn")) $("quickUndoBtn").disabled = !S.snapHistory.length;
   const team=TEAMS.find(t=>t.id===S.selectedTeamId);
   $("gameLbl").textContent=S.gameName||(team?team.name:"")||"";
   $("livePill").classList.toggle("show",  S.gameStarted&&!S.gameEnded);
@@ -1781,7 +1821,7 @@ function renderDashboard(){
   const shown = filter==="all" ? games : games.filter(g=>(g.selectedTeamId||g.teamId)===filter);
   if(!shown.length){ $("dashBody").innerHTML='<div class="note">No finished cloud games for this view yet.</div>'; return; }
   const totals = mergeTotals(shown);
-  let html = `<div class="team-totals"><div class="tt-title">Season / Selected Totals</div><div class="tt-grid">
+  let html = `<div class="export-row"><button class="btn blue" id="exportSeasonBtn" type="button">Export Season CSV</button></div><div class="team-totals"><div class="tt-title">Season / Selected Totals</div><div class="tt-grid">
     <div class="tt-box"><div class="v">${totals.games||0}</div><div class="l">Games</div></div>
     <div class="tt-box"><div class="v">${totals.snaps||0}</div><div class="l">Snaps</div></div>
     <div class="tt-box"><div class="v">${totals.runs||0}</div><div class="l">Rushes</div></div>
@@ -1792,6 +1832,7 @@ function renderDashboard(){
   shown.forEach(g=>{ const tt=teamTotals(g.playLog||[]); html += `<div class="gi"><div class="gi-title">${esc(g.gameName||"Untitled Game")}</div><div class="gi-sub">${g.teamName?esc(g.teamName)+" · ":""}${new Date(g.date).toLocaleDateString()} · ${g.snapCount||0} snaps<br>${statLine(tt)}</div><div class="gi-acts"><button class="btn view-b" data-id="${g.id}">Boxscore</button></div></div>`; });
   $("dashBody").innerHTML=html;
   document.querySelectorAll("#dashBody .view-b").forEach(b=>b.onclick=()=>openView(shown.find(g=>g.id===b.dataset.id)));
+  if($("exportSeasonBtn")) $("exportSeasonBtn").onclick=()=>exportSeasonCSV(shown);
 }
 function ensureAdminUsers(){
   if(!isAdmin()) return;
@@ -1860,8 +1901,9 @@ function renderSaved() {
   });
   games.forEach(r=>{
     const d=document.createElement("div"); d.className="gi";
-    d.innerHTML=`<div class="gi-title">${esc(r.gameName)}</div><div class="gi-sub">${r.teamName?r.teamName+" · ":""}${new Date(r.date).toLocaleDateString()} · ${r.snapCount} snaps · ${r.gameType}-man</div><div class="gi-acts"><button class="btn view-b">View</button><button class="btn red del-b">Delete</button></div>`;
+    d.innerHTML=`<div class="gi-title">${esc(r.gameName)}</div><div class="gi-sub">${r.teamName?r.teamName+" · ":""}${new Date(r.date).toLocaleDateString()} · ${r.snapCount} snaps · ${r.gameType}-man</div><div class="gi-acts"><button class="btn view-b">View</button><button class="btn blue exp-b">Export</button><button class="btn red del-b">Delete</button></div>`;
     d.querySelector(".view-b").onclick=()=>openView(r);
+    d.querySelector(".exp-b").onclick=()=>exportGameCSV(r);
     d.querySelector(".del-b").onclick=async()=>{ if(!confirm("Delete?"))return; if(r._fbId)await fbDelete(r._fbId); S.results=S.results.filter(x=>x.id!==r.id); render(); };
     $("savedList").appendChild(d);
   });
@@ -1893,9 +1935,73 @@ function buildSPGrid(cid, players, dk) {
   players.forEach(p=>{
     const b=document.createElement("button"); b.className="sp-btn";
     b.innerHTML=`<div class="n">#${p.number}</div><div class="nm">${esc(p.name.split(" ")[0])}</div>`;
-    b.onclick=()=>{ D[dk]=D[dk]===p.id?null:p.id; g.querySelectorAll(".sp-btn").forEach((x,i)=>x.classList.toggle("on",players[i].id===D[dk])); };
+    b.onclick=()=>{
+      if(dk==="tack2" && !D.tack){ alert("Pick the main tackler first."); return; }
+      if(dk==="tack" && D.tack2===p.id) D.tack2=null;
+      if(dk==="tack2" && D.tack===p.id){ alert("Assist must be a different player."); return; }
+      D[dk]=D[dk]===p.id?null:p.id;
+      g.querySelectorAll(".sp-btn").forEach((x,i)=>x.classList.toggle("on",players[i].id===D[dk]));
+    };
     g.appendChild(b);
   });
+}
+
+
+function yfmt(n){ n=Number(n||0); return (n>=0?"+":"") + n; }
+function csvEscape(v){ const x=String(v??""); return /[",\n]/.test(x) ? '"'+x.replace(/"/g,'""')+'"' : x; }
+function downloadText(filename, text, type="text/csv"){
+  const blob=new Blob([text],{type}); const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+}
+function safeFileName(s){ return String(s||"snaptrack").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60)||"snaptrack"; }
+function playerStatRows(result){
+  const total=result.snapCount||0, agg=aggregateLog(result.playLog||[], result.players||[]);
+  const byId={}; agg.forEach(a=>byId[a.id]=a);
+  return (result.players||[]).map(p=>{
+    const a=byId[p.id]||{}; return {number:p.number,name:p.name,snaps:p.plays||0,pct:total?Math.round((p.plays||0)*100/total):0,absent:!!p.absent,
+      rushAtt:a.rushAtt||0,rushYds:a.rushYds||0,passCmp:a.passCmp||0,passAtt:a.passAtt||0,passYds:a.passYds||0,passTD:a.passTD||0,passINT:a.passINT||0,
+      recCmp:a.recCmp||0,recTar:a.recTar||0,recYds:a.recYds||0,recTD:a.recTD||0,tackles:a.tackles||0,assists:a.assists||0,sacks:a.sacks||0,ints:a.ints||0,fumbles:a.fumbles||0};
+  }).sort((a,b)=>b.snaps-a.snaps || a.number-b.number);
+}
+function exportGameCSV(result){
+  const tt=teamTotals(result.playLog||[]);
+  const lines=[];
+  lines.push(["Game",result.gameName||"",result.teamName||"",new Date(result.date).toLocaleDateString(),"Snaps",result.snapCount||0].map(csvEscape).join(","));
+  lines.push(["Team Totals","Rush Att",tt.runs,"Rush Yds",tt.rushYds,"Pass Cmp",tt.passCmp,"Pass Att",tt.passAtt,"Pass Yds",tt.passYds,"Pass TD",tt.passTD,"INT Thrown",tt.passINT,"Tackles",tt.tackles,"Sacks",tt.sacks,"Def INT",tt.ints,"Fumbles",tt.fumbles].map(csvEscape).join(","));
+  lines.push("");
+  lines.push(["#","Player","Snaps","Snap %","Rush","Rush Yds","Pass Cmp","Pass Att","Pass Yds","Pass TD","INT Thrown","Rec","Targets","Rec Yds","Rec TD","TKL","AST","SACK","INT","FUM","Absent"].join(","));
+  playerStatRows(result).forEach(r=>lines.push([r.number,r.name,r.snaps,r.pct+"%",r.rushAtt,r.rushYds,r.passCmp,r.passAtt,r.passYds,r.passTD,r.passINT,r.recCmp,r.recTar,r.recYds,r.recTD,r.tackles,r.assists,r.sacks,r.ints,r.fumbles,r.absent?"Yes":""].map(csvEscape).join(",")));
+  lines.push(""); lines.push(["Play #","Phase","Type","Description","Result","Yards"].join(","));
+  (result.playLog||[]).slice().reverse().forEach(p=>lines.push([p.snapNum,p.phase,p.pt,p.desc,p.sub,p.yards??""].map(csvEscape).join(",")));
+  downloadText(`${safeFileName(result.gameName||"game")}-boxscore.csv`, lines.join("\n"));
+}
+function exportSeasonCSV(games){
+  const lines=[["Game","Team","Date","Snaps","Rush","Rush Yds","Pass Cmp","Pass Att","Pass Yds","Tackles","Sacks","INT","Fumbles"].join(",")];
+  games.forEach(g=>{ const tt=teamTotals(g.playLog||[]); lines.push([g.gameName||"",g.teamName||"",new Date(g.date).toLocaleDateString(),g.snapCount||0,tt.runs,tt.rushYds,tt.passCmp,tt.passAtt,tt.passYds,tt.tackles,tt.sacks,tt.ints,tt.fumbles].map(csvEscape).join(",")); });
+  downloadText("snaptrack-season-export.csv", lines.join("\n"));
+}
+function renderBoxScoreHTML(result){
+  const tt=teamTotals(result.playLog||[]); const rows=playerStatRows(result);
+  const off=rows.filter(r=>r.rushAtt||r.passAtt||r.recTar); const def=rows.filter(r=>r.tackles||r.assists||r.sacks||r.ints||r.fumbles);
+  let html=`<div class="sum-section-title">Boxscore</div><div class="team-totals"><div class="tt-title">Team Boxscore</div><div class="tt-grid">
+    <div class="tt-box"><div class="v">${tt.runs}</div><div class="l">Rush Att</div></div><div class="tt-box"><div class="v">${yfmt(tt.rushYds)}</div><div class="l">Rush Yds</div></div>
+    <div class="tt-box"><div class="v">${tt.passCmp}/${tt.passAtt}</div><div class="l">Pass C/A</div></div><div class="tt-box"><div class="v">${yfmt(tt.passYds)}</div><div class="l">Pass Yds</div></div>
+    <div class="tt-box"><div class="v">${tt.passTD}</div><div class="l">Pass TD</div></div><div class="tt-box"><div class="v">${tt.passINT}</div><div class="l">INT Thrown</div></div>
+    <div class="tt-box"><div class="v">${tt.tackles}</div><div class="l">Tackles</div></div><div class="tt-box"><div class="v">${tt.sacks}</div><div class="l">Sacks</div></div>
+    <div class="tt-box"><div class="v">${tt.ints}</div><div class="l">Def INT</div></div><div class="tt-box"><div class="v">${tt.fumbles}</div><div class="l">Fumbles</div></div>
+  </div></div>`;
+  if(off.length){ html += `<div class="log-group-hdr">⚡ Offensive Boxscore</div><table class="box-table"><thead><tr><th>Player</th><th>SN</th><th>Rush</th><th>RYD</th><th>Pass</th><th>PYD</th><th>Rec</th><th>CYD</th></tr></thead><tbody>` + off.map(r=>`<tr><td>#${r.number} ${esc(r.name)}</td><td>${r.snaps}</td><td>${r.rushAtt}</td><td>${yfmt(r.rushYds)}</td><td>${r.passCmp}/${r.passAtt}</td><td>${yfmt(r.passYds)}</td><td>${r.recCmp}/${r.recTar}</td><td>${yfmt(r.recYds)}</td></tr>`).join("") + `</tbody></table>`; }
+  if(def.length){ html += `<div class="log-group-hdr">🛡 Defensive Boxscore</div><table class="box-table"><thead><tr><th>Player</th><th>SN</th><th>TKL</th><th>AST</th><th>SACK</th><th>INT</th><th>FUM</th></tr></thead><tbody>` + def.map(r=>`<tr><td>#${r.number} ${esc(r.name)}</td><td>${r.snaps}</td><td>${r.tackles}</td><td>${r.assists}</td><td>${r.sacks}</td><td>${r.ints}</td><td>${r.fumbles}</td></tr>`).join("") + `</tbody></table>`; }
+  return html;
+}
+function currentConflict(){
+  if(!S.gameStarted || !S.selectedTeamId) return "";
+  const g=(S.activeCloudGames||[]).find(x=>(x.selectedTeamId||x._activeId)===S.selectedTeamId);
+  if(!g) return "";
+  const by=emailKey(g.updatedBy); const me=emailKey(auth.currentUser?.email);
+  if(by && by!==me && (g.snapCount||0)!==S.snapCount) return `Conflict warning: ${by} also has this game open at ${g.snapCount||0} snaps. Check Saved > LIVE before scoring.`;
+  return "";
 }
 
 // ── SUMMARY MODAL ─────────────────────────────────────────────
@@ -1932,15 +2038,7 @@ function openSum(result) {
     html += `<div class="sum-stats-grid">
       <div class="sum-stat-box" style="grid-column:1/-1"><div class="v" style="color:var(--amber)">${st.offYds >= 0 ? "+" : ""}${st.offYds}</div><div class="l">Total Offensive Yards</div></div>
     </div>`;
-    const tt = teamTotals(result.playLog||[]);
-    html += `<div class="sum-section-title">Boxscore</div><div class="team-totals"><div class="tt-grid">
-      <div class="tt-box"><div class="v">${tt.runs}</div><div class="l">Rush</div></div>
-      <div class="tt-box"><div class="v">${tt.rushYds>=0?"+":""}${tt.rushYds}</div><div class="l">Rush Yds</div></div>
-      <div class="tt-box"><div class="v">${tt.passCmp}/${tt.passAtt}</div><div class="l">Pass C/A</div></div>
-      <div class="tt-box"><div class="v">${tt.passYds>=0?"+":""}${tt.passYds}</div><div class="l">Pass Yds</div></div>
-      <div class="tt-box"><div class="v">${tt.tackles+tt.sacks}</div><div class="l">Stops</div></div>
-      <div class="tt-box"><div class="v">${tt.ints}</div><div class="l">INT</div></div>
-    </div></div>`;
+    html += renderBoxScoreHTML(result);
   }
 
   html += `<div class="sum-section-title">Player Participation</div>`;
@@ -1983,20 +2081,8 @@ function openView(result) {
   </div>`;
 
   if (result.playLog && result.playLog.length) {
-    const tt = teamTotals(result.playLog||[]);
-    const agg = aggregateLog(result.playLog||[], result.players||[]);
-    const offPlayers = agg.filter(p => p.rushAtt+p.passAtt+p.recTar > 0);
-    const defPlayers = agg.filter(p => p.tackles+p.assists+p.sacks+p.ints+p.fumbles > 0);
-    html += `<div class="sum-section-title">Boxscore</div><div class="team-totals"><div class="tt-grid">
-      <div class="tt-box"><div class="v">${tt.runs}</div><div class="l">Rush</div></div>
-      <div class="tt-box"><div class="v">${tt.rushYds>=0?"+":""}${tt.rushYds}</div><div class="l">Rush Yds</div></div>
-      <div class="tt-box"><div class="v">${tt.passCmp}/${tt.passAtt}</div><div class="l">Pass C/A</div></div>
-      <div class="tt-box"><div class="v">${tt.passYds>=0?"+":""}${tt.passYds}</div><div class="l">Pass Yds</div></div>
-      <div class="tt-box"><div class="v">${tt.tackles+tt.sacks}</div><div class="l">Stops</div></div>
-      <div class="tt-box"><div class="v">${tt.ints}</div><div class="l">INT</div></div>
-    </div></div>`;
-    if(offPlayers.length){ html += `<div class="log-group-hdr">⚡ Offensive Leaders</div>` + offPlayers.slice(0,6).map(p=>`<div class="sum-row"><span><strong>#${p.number}</strong> ${esc(p.name)}</span><span>${p.rushAtt?`${p.rushAtt} rush, ${p.rushYds} yds`:""}${p.passAtt?`${p.passCmp}/${p.passAtt}, ${p.passYds} pass yds`:""}${p.recTar?`${p.recCmp}/${p.recTar}, ${p.recYds} rec yds`:""}</span></div>`).join(""); }
-    if(defPlayers.length){ html += `<div class="log-group-hdr">🛡 Defensive Leaders</div>` + defPlayers.slice(0,6).map(p=>`<div class="sum-row"><span><strong>#${p.number}</strong> ${esc(p.name)}</span><span>${p.tackles} TKL · ${p.assists} AST · ${p.sacks} SACK · ${p.ints} INT</span></div>`).join(""); }
+    html += `<div class="export-row"><button class="btn blue" id="exportGameBtn" type="button">Export CSV</button></div>`;
+    html += renderBoxScoreHTML(result);
   }
 
   html += `<div class="sum-section-title">Player Snaps</div>`;
@@ -2030,6 +2116,7 @@ function openView(result) {
   }
   $("viewBody").innerHTML=html;
   $("viewModal").classList.add("show");
+  if($("exportGameBtn")) $("exportGameBtn").onclick=()=>exportGameCSV(result);
 }
 
 // ── TUTORIAL ──────────────────────────────────────────────────
@@ -2121,6 +2208,7 @@ $("endBtn").onclick=endGame;
 $("resetBtn").onclick=resetGame;
 $("viewSumBtn").onclick=()=>{ if(S.lastResult) openSum(S.lastResult); };
 $("undoBtn").onclick=undoSnap;
+if($("quickUndoBtn")) $("quickUndoBtn").onclick=undoSnap;
 $("clearBtn").onclick=()=>{ S.players=S.players.map(p=>({...p,selected:false})); S.activeGrp=""; persist(); render(); };
 $("snapBtn").onclick=pressSnap;
 $("gameSearch").oninput=()=>render();
