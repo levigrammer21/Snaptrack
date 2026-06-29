@@ -542,6 +542,11 @@
     body.sunny .auth-card { background:rgba(255,255,255,.96); }
     body.sunny .snap-big:not(.ready) { background:#dfe8f5; color:#8390a6; }
 
+    .people-btn { min-width: 38px; font-size: 17px; padding: 4px 8px; }
+    .admin-user-main { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .avatar { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--green-dim); border:1px solid rgba(34,197,94,.25); font-size:21px; flex-shrink:0; }
+    .admin-user-copy { min-width:0; flex:1; }
+    .access-btn.on { background:var(--green); color:#0d0f14; border-color:var(--green); }
     .hidden { display: none !important; }
     @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
     .pop { animation: pop .18s ease; }
@@ -591,6 +596,7 @@
       <span class="ended-pill" id="endedPill">● Ended</span>
       <span class="game-lbl"   id="gameLbl"></span>
       <div class="hdr-actions">
+        <button class="mini-btn people-btn hidden" id="peopleBtn" type="button" aria-label="People access">👥</button>
         <button class="mini-btn" id="themeBtn" type="button">Sun Mode</button>
         <button class="mini-btn" id="logoutBtn" type="button">Logout</button>
       </div>
@@ -608,7 +614,6 @@
     <button class="tab"    data-tab="roster">Roster</button>
     <button class="tab"    data-tab="log">Log</button>
     <button class="tab"    data-tab="dashboard">Dash</button>
-    <button class="tab"    data-tab="admin" id="adminTab">Admin</button>
     <button class="tab"    data-tab="saved">Saved</button>
   </div>
 
@@ -733,13 +738,13 @@
     </div>
   </div>
 
-  <!-- ADMIN -->
+  <!-- PEOPLE / ADMIN -->
   <div id="pg-admin" class="page">
     <div class="card">
-      <div class="card-title">Admin — Team Access</div>
-      <div class="note" style="padding-top:0">Grant access by email. If the coach has already signed in, they appear below. If not, the access is waiting for that email.</div>
+      <div class="card-title">People — Team Access</div>
+      <div class="note" style="padding-top:0">Tap a team pill on a person to toggle access.</div>
       <div class="admin-add">
-        <input id="adminEmailIn" type="email" placeholder="coach@email.com" />
+        <input id="adminEmailIn" type="email" placeholder="add coach email manually" />
         <button class="btn blue" id="adminAddBtn" type="button">Add</button>
       </div>
       <div id="adminUsers"><div class="note">Loading users…</div></div>
@@ -940,7 +945,6 @@ const TEAMS = [
     name: "1/2 Team",
     gameType: 8,
     players: [
-      { number:  1, name: "Ryan Nelson" },
       { number:  7, name: "Ronin Massey" },
       { number:  8, name: "Brooks Grill" },
       { number: 11, name: "Legend Griffin" },
@@ -1019,7 +1023,7 @@ const S = {
   gameName:"", gameType:8, selectedTeamId:null,
   players:[], snapCount:0, snapHistory:[],
   phase:"offense", activeGrp:"", editGrp:"",
-  teamGroups:{}, groupLabels:{offense:"OFF",defense:"DEF",kickoff:"KO",kickReturn:"KR",special:"SPL",secondTeam:"2ND"}, playLog:[], results:[],
+  teamGroups:{}, groupLabels:{offense:"OFF",defense:"DEF",kickoff:"KO",kickReturn:"KR",special:"SPL",secondTeam:"2ND"}, groupColors:{offense:"blue",defense:"green",kickoff:"amber",kickReturn:"amber",special:"purple",secondTeam:"gray"}, playLog:[], results:[],
   lastResult: null,
   logView: "summary",      // "summary" | "chrono"
   tutorialSeen: false,     // first-run flag
@@ -1048,10 +1052,32 @@ function accessibleGames(){
 }
 
 const GROUP_DEFAULTS = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
+const GROUP_COLOR_DEFAULTS = { offense:"blue", defense:"green", kickoff:"amber", kickReturn:"amber", special:"purple", secondTeam:"gray" };
+const GROUP_COLOR_MAP = {
+  blue:   { name:"Blue",   fg:"#3b82f6", bg:"rgba(59,130,246,.18)", border:"rgba(59,130,246,.55)" },
+  green:  { name:"Green",  fg:"#22c55e", bg:"rgba(34,197,94,.16)", border:"rgba(34,197,94,.55)" },
+  amber:  { name:"Gold",   fg:"#f59e0b", bg:"rgba(245,158,11,.16)", border:"rgba(245,158,11,.55)" },
+  red:    { name:"Red",    fg:"#ef4444", bg:"rgba(239,68,68,.16)", border:"rgba(239,68,68,.55)" },
+  purple: { name:"Purple", fg:"#a855f7", bg:"rgba(168,85,247,.16)", border:"rgba(168,85,247,.55)" },
+  gray:   { name:"Gray",   fg:"#9aa8c7", bg:"rgba(154,168,199,.14)", border:"rgba(154,168,199,.45)" },
+};
 
 function grpLabel(g){
   S.groupLabels = {...GROUP_DEFAULTS, ...(S.groupLabels||{})};
   return S.groupLabels[g] || GROUP_DEFAULTS[g] || g;
+}
+function grpColorKey(g){
+  S.groupColors = {...GROUP_COLOR_DEFAULTS, ...(S.groupColors||{})};
+  return S.groupColors[g] || GROUP_COLOR_DEFAULTS[g] || "blue";
+}
+function grpColor(g){ return GROUP_COLOR_MAP[grpColorKey(g)] || GROUP_COLOR_MAP.blue; }
+function chipStyle(g, active=false){
+  const c=grpColor(g);
+  return `color:${c.fg};border-color:${c.border};${active?`background:${c.bg};`:""}`;
+}
+function paintGroupChips(){
+  document.querySelectorAll("#loadChips .chip").forEach(b=>{ b.textContent=grpLabel(b.dataset.grp); b.setAttribute("style", chipStyle(b.dataset.grp, b.classList.contains("on"))); });
+  document.querySelectorAll("#editChips .chip").forEach(b=>{ b.textContent=grpLabel(b.dataset.egrp); b.setAttribute("style", chipStyle(b.dataset.egrp, b.classList.contains("on"))); });
 }
 
 function normalizeGroupsForTeam(teamId){
@@ -1096,15 +1122,20 @@ function renameSelectedGroup(){
   if(!S.editGrp) return alert("Select a group first.");
   const label = prompt("Group name", grpLabel(S.editGrp));
   if(!label || !label.trim()) return;
-  S.groupLabels[S.editGrp] = label.trim().slice(0, 12).toUpperCase();
+  const choices = Object.entries(GROUP_COLOR_MAP).map(([k,v])=>`${k} = ${v.name}`).join("\n");
+  const picked = prompt(`Group color\n${choices}`, grpColorKey(S.editGrp));
+  const colorKey = emailKey(picked || grpColorKey(S.editGrp));
+  S.groupLabels[S.editGrp] = label.trim().slice(0, 14).toUpperCase();
+  if(GROUP_COLOR_MAP[colorKey]) S.groupColors[S.editGrp] = colorKey;
   persist();
   flashGroupSaved();
   render();
 }
 
 function resetGroupNames(){
-  if(!confirm("Reset group names to OFF, DEF, KO, KR, SPL, 2ND?")) return;
+  if(!confirm("Reset group names/colors to defaults?")) return;
   S.groupLabels = {...GROUP_DEFAULTS};
+  S.groupColors = {...GROUP_COLOR_DEFAULTS};
   persist();
   flashGroupSaved();
   render();
@@ -1219,7 +1250,7 @@ async function flushSave(reason="manual") {
   saveBusy=true; markSync("saving", "Saving to cloud…");
   try {
     if(S.selectedTeamId) {
-      await fbSavePresets(S.selectedTeamId, { teamGroups:S.teamGroups?.[S.selectedTeamId]||{}, groupLabels:S.groupLabels||{}, updatedAt:serverTimestamp(), updatedBy:auth.currentUser.email||"unknown" });
+      await fbSavePresets(S.selectedTeamId, { teamGroups:S.teamGroups?.[S.selectedTeamId]||{}, groupLabels:S.groupLabels||{}, groupColors:S.groupColors||{}, updatedAt:serverTimestamp(), updatedBy:auth.currentUser.email||"unknown" });
     }
     if(S.gameStarted && !S.gameEnded && S.selectedTeamId) {
       await fbSetActive(S.selectedTeamId, statePayload());
@@ -1243,6 +1274,7 @@ async function hydrateCloud() {
     if(!p._teamId || !canAccessTeam(p._teamId)) return;
     S.teamGroups[p._teamId] = p.teamGroups || S.teamGroups[p._teamId] || {};
     S.groupLabels = {...GROUP_DEFAULTS, ...(p.groupLabels||S.groupLabels||{})};
+    S.groupColors = {...GROUP_COLOR_DEFAULTS, ...(p.groupColors||S.groupColors||{})};
   });
   S.activeCloudGames = active.filter(g=>g.gameStarted && !g.gameEnded && canAccessTeam(g.selectedTeamId||g._activeId));
   const ids=new Set(S.results.map(r=>r.id));
@@ -1537,11 +1569,12 @@ function render() {
   $("endedPill").classList.toggle("show", S.gameEnded);
   $("snapHelp").textContent=!S.selectedTeamId?"Select a team to get started.":!S.gameStarted?"Select team & start game.":S.gameEnded?"Game ended — tap New Game to reset.":!r?`Select ${S.gameType} players to snap.`:"Ready — tap SNAP.";
 
-  if($("adminTab")) $("adminTab").classList.toggle("hidden", !isAdmin());
+  if($("peopleBtn")) $("peopleBtn").classList.toggle("hidden", !isAdmin());
   if(S.page==="admin" && !isAdmin()) S.page="game";
   document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===S.page));
   ["game","roster","log","dashboard","admin","saved"].forEach(p=>$(`pg-${p}`).classList.toggle("on",S.page===p));
 
+  paintGroupChips();
   if (S.page==="game")      renderGame();
   if (S.page==="roster")    renderRoster();
   if (S.page==="log")       renderLog();
@@ -1586,6 +1619,7 @@ function renderGame() {
 
   document.querySelectorAll(".phase-btn").forEach(b=>b.classList.toggle("on",b.dataset.phase===S.phase));
   document.querySelectorAll("#loadChips .chip").forEach(c=>c.classList.toggle("on",c.dataset.grp===S.activeGrp));
+  paintGroupChips();
   $("playersCardTitle").textContent=S.phase==="offense"?"⚡ Offense Players":"🛡 Defense Players";
 
   const q=$("gameSearch").value.toLowerCase();
@@ -1604,6 +1638,7 @@ function renderGame() {
 function renderRoster() {
   const grps=getGroups();
   document.querySelectorAll("[data-egrp]").forEach(b=>b.classList.toggle("on",b.dataset.egrp===S.editGrp));
+  paintGroupChips();
   $("editStatus").textContent=S.editGrp?`Editing ${grpLabel(S.editGrp)} — tap players to add/remove`:"Select a group to edit.";
 
   // Group-build progress indicator
@@ -1623,10 +1658,10 @@ function renderRoster() {
   if (!S.players.length) { $("rosterPlayers").innerHTML='<div class="note">Select a team first.</div>'; return; }
   S.players.forEach(p=>{
     const inG=S.editGrp&&groupIncludesPlayer((grps[S.editGrp]||[]), p);
-    const tags=Object.entries(GN).filter(([k])=>groupIncludesPlayer((grps[k]||[]), p)).map(([,v])=>v);
+    const tags=Object.keys(GROUP_DEFAULTS).filter(k=>groupIncludesPlayer((grps[k]||[]), p)).map(k=>({key:k,label:grpLabel(k),color:grpColor(k)}));
     const c=document.createElement("div");
     c.className="p-card"+(inG?" ingrp":"")+(p.absent?" absent":"");
-    c.innerHTML=`<div class="p-num">${p.number}</div><div class="p-info"><div class="p-name">${esc(p.name)}</div><div class="p-sub">${p.absent?'<span class="badge amber">Absent</span>':""}${tags.map(t=>`<span class="badge blue">${t}</span>`).join("")}</div></div><div class="p-plays ${p.plays<5?"low":"ok"}">${p.plays}</div>`;
+    c.innerHTML=`<div class="p-num">${p.number}</div><div class="p-info"><div class="p-name">${esc(p.name)}</div><div class="p-sub">${p.absent?'<span class="badge amber">Absent</span>':""}${tags.map(t=>`<span class="badge" style="color:${t.color.fg};background:${t.color.bg};border:1px solid ${t.color.border}">${esc(t.label)}</span>`).join("")}</div></div><div class="p-plays ${p.plays<5?"low":"ok"}">${p.plays}</div>`;
     c.onclick=()=>{
       if (S.editGrp&&!S.gameStarted) { toggleMember(p.id); return; }
       if (!S.gameStarted) { S.players=S.players.map(x=>x.id===p.id?{...x,absent:!x.absent,selected:false}:x); persist(); render(); }
@@ -1771,8 +1806,12 @@ function renderAdmin(){
     };
   }
   const users = S.adminUsers || [];
-  if(!users.length){ $("adminUsers").innerHTML='<div class="note">No users found yet. Add a coach email above, or have them sign in once.</div>'; return; }
-  $("adminUsers").innerHTML = users.map(u=>`<div class="admin-user" data-uid="${esc(u.uid)}"><div class="admin-user-title">${esc(u.email||"No email")}</div><div class="admin-user-sub">${u.pending?"Pending / email access":(u.name?esc(u.name)+" · ":"")}${emailKey(u.email)===ADMIN_EMAIL?"You / admin":"Coach"}</div><div class="access-row">${TEAMS.map(t=>`<button class="btn access-btn ${(u.teams&&u.teams[t.id])?"on":""}" data-uid="${esc(u.uid)}" data-email="${esc(u.email||"")}" data-team="${t.id}">${teamShort(t.id)}</button>`).join("")}</div></div>`).join("");
+  if(!users.length){ $("adminUsers").innerHTML='<div class="note">No accounts found yet. Add a coach email above, or have them sign in once.</div>'; return; }
+  $("adminUsers").innerHTML = users.map(u=>{
+    const admin = emailKey(u.email)===ADMIN_EMAIL;
+    const display = u.name || (u.email ? String(u.email).split("@")[0] : "Coach");
+    return `<div class="admin-user" data-uid="${esc(u.uid)}"><div class="admin-user-main"><div class="avatar">👤</div><div class="admin-user-copy"><div class="admin-user-title">${esc(display)} ${admin?'<span class="badge blue">ADMIN</span>':u.pending?'<span class="badge amber">PENDING</span>':''}</div><div class="admin-user-sub">${esc(u.email||"No email")}</div></div></div><div class="access-row">${TEAMS.map(t=>`<button class="btn access-btn ${(u.teams&&u.teams[t.id])?"on":""}" data-uid="${esc(u.uid)}" data-email="${esc(u.email||"")}" data-team="${t.id}">${teamShort(t.id)}</button>`).join("")}</div></div>`;
+  }).join("");
   document.querySelectorAll(".access-btn").forEach(b=>b.onclick=async()=>{
     const u=S.adminUsers.find(x=>String(x.uid)===b.dataset.uid || emailKey(x.email)===emailKey(b.dataset.email)); if(!u) return;
     u.teams={...(u.teams||{})}; u.teams[b.dataset.team]=!u.teams[b.dataset.team];
@@ -2105,6 +2144,7 @@ $("tutNextBtn").onclick=()=>{ if (tutStep < TUT_STEPS.length-1) { tutStep++; ren
 $("tutBackBtn").onclick=()=>{ if (tutStep > 0) { tutStep--; renderTut(); } };
 $("tutSkipBtn").onclick=closeTutorial;
 $("tutHelpBtn").onclick=()=>openTutorial(true);
+if($("peopleBtn")) $("peopleBtn").onclick=()=>{ S.page="admin"; render(); };
 if($("renameGroupBtn")) $("renameGroupBtn").onclick=renameSelectedGroup;
 if($("resetGroupNamesBtn")) $("resetGroupNamesBtn").onclick=resetGroupNames;
 $("tutBg").onclick=e=>{ if(e.target===$("tutBg")) closeTutorial(); };
