@@ -1,4 +1,4 @@
-<!-- v7.3 surgical cloud save: admin access + dashboard + boxscore -->
+<!-- v7.4 surgical cloud save: admin access + dashboard + boxscore + sun mode -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -524,6 +524,24 @@
     .dash-filter { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-bottom: 10px; }
     .dash-filter .chip { margin-bottom: 0; }
 
+
+    .hdr-actions { display:flex; gap:6px; align-items:center; justify-content:flex-end; margin-top:4px; }
+    .mini-btn { background: var(--surf2); border:1px solid var(--border); color:var(--muted); border-radius:999px; padding:4px 8px; font-size:10px; font-weight:900; text-transform:uppercase; cursor:pointer; }
+    .mini-btn:active { transform:scale(.97); }
+    .admin-add { display:grid; grid-template-columns:1fr auto; gap:8px; margin:10px 0 12px; }
+    .admin-add input { min-height:40px; padding:8px 10px; font-size:13px; }
+    .admin-add .btn { min-height:40px; padding:0 12px; width:auto; }
+    body.sunny {
+      --bg:#eef3fb; --surf:#ffffff; --surf2:#e7eef9; --border:#bcc9dc;
+      --text:#152033; --muted:#53637b; --blue:#1769e8; --blue-dim:rgba(23,105,232,.16);
+      --green:#0b9f4a; --green-dim:rgba(11,159,74,.15); --red:#d72525; --red-dim:rgba(215,37,37,.13);
+      --amber:#c77900; --amber-dim:rgba(199,121,0,.18);
+    }
+    body.sunny .snap-bar { background:rgba(238,243,251,.96); }
+    body.sunny .auth-screen { background:linear-gradient(180deg,#f8fbff 0%,#eaf1fb 100%); }
+    body.sunny .auth-card { background:rgba(255,255,255,.96); }
+    body.sunny .snap-big:not(.ready) { background:#dfe8f5; color:#8390a6; }
+
     .hidden { display: none !important; }
     @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
     .pop { animation: pop .18s ease; }
@@ -558,7 +576,7 @@
     <button class="auth-link" id="forgotBtn" type="button">Forgot password?</button>
   </div>
 
-  <div class="auth-version">SnapTrack · v7.2 Cloud Save</div>
+  <div class="auth-version">SnapTrack · v7.4 Cloud Save</div>
 </div>
 
 <div class="app">
@@ -572,6 +590,10 @@
       <span class="live-pill"  id="livePill">● Live</span>
       <span class="ended-pill" id="endedPill">● Ended</span>
       <span class="game-lbl"   id="gameLbl"></span>
+      <div class="hdr-actions">
+        <button class="mini-btn" id="themeBtn" type="button">Sun Mode</button>
+        <button class="mini-btn" id="logoutBtn" type="button">Logout</button>
+      </div>
     </div>
   </div>
 
@@ -715,7 +737,11 @@
   <div id="pg-admin" class="page">
     <div class="card">
       <div class="card-title">Admin — Team Access</div>
-      <div class="note" style="padding-top:0">Only levi​grammer@gmail.com sees this. Users appear here after they create/sign in once.</div>
+      <div class="note" style="padding-top:0">Grant access by email. If the coach has already signed in, they appear below. If not, the access is waiting for that email.</div>
+      <div class="admin-add">
+        <input id="adminEmailIn" type="email" placeholder="coach@email.com" />
+        <button class="btn blue" id="adminAddBtn" type="button">Add</button>
+      </div>
       <div id="adminUsers"><div class="note">Loading users…</div></div>
     </div>
   </div>
@@ -854,7 +880,7 @@
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs,
          deleteDoc, doc, query, orderBy, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseApp = initializeApp({
   apiKey:            "AIzaSyAvfXlnSEyTmMmrxO91blwVt0jZeWWkyX0",
@@ -876,9 +902,29 @@ async function fbEndActive(teamId) { try { await deleteDoc(doc(db,"activeGames",
 async function fbLoadActive() { try { const s=await getDocs(collection(db,"activeGames")); return s.docs.map(d=>({...d.data(), _activeId:d.id})); } catch(e) { return []; } }
 async function fbSavePresets(teamId, data) { await setDoc(doc(db,"teamPresets",teamId), data, { merge:true }); }
 async function fbLoadPresets() { try { const s=await getDocs(collection(db,"teamPresets")); return s.docs.map(d=>({...d.data(), _teamId:d.id})); } catch(e) { return []; } }
-async function fbUpsertUser(user) { if(!user) return; await setDoc(doc(db,"users",user.uid), { uid:user.uid, email:(user.email||"").toLowerCase(), name:user.displayName||"", lastLoginAt:serverTimestamp() }, { merge:true }); }
+function emailKey(email){ return String(email||"").trim().toLowerCase().replace(/\//g,"_"); }
+const ALL_TEAM_ACCESS = {"team-1-2":true,"team-3-4":true,"team-5-6":true};
+async function fbUpsertUser(user) {
+  if(!user) return;
+  const email=emailKey(user.email);
+  let waiting=null;
+  try { const d=await getDoc(doc(db,"accessByEmail",email)); waiting=d.exists()?d.data():null; } catch(e){}
+  const teams = email===ADMIN_EMAIL ? ALL_TEAM_ACCESS : (waiting?.teams || undefined);
+  const payload = { uid:user.uid, email, name:user.displayName||"", lastLoginAt:serverTimestamp() };
+  if(teams) payload.teams = teams;
+  await setDoc(doc(db,"users",user.uid), payload, { merge:true });
+}
 async function fbLoadUsers() { try { const s=await getDocs(query(collection(db,"users"), orderBy("email","asc"))); return s.docs.map(d=>({...d.data(), uid:d.id})); } catch(e) { return []; } }
-async function fbSaveUserAccess(uid, data) { await setDoc(doc(db,"users",uid), { teams:data, updatedAt:serverTimestamp(), updatedBy:auth.currentUser?.email||"unknown" }, { merge:true }); }
+async function fbLoadEmailAccess() { try { const s=await getDocs(query(collection(db,"accessByEmail"), orderBy("email","asc"))); return s.docs.map(d=>({...d.data(), uid:"email:"+d.id, pending:true})); } catch(e) { return []; } }
+async function fbSaveUserAccess(uid, data, email) {
+  if(String(uid||"").startsWith("email:")) return fbSaveEmailAccess(email || uid.slice(6), data);
+  await setDoc(doc(db,"users",uid), { teams:data, updatedAt:serverTimestamp(), updatedBy:auth.currentUser?.email||"unknown" }, { merge:true });
+  if(email) await fbSaveEmailAccess(email, data);
+}
+async function fbSaveEmailAccess(email, data) {
+  const key=emailKey(email); if(!key) throw new Error("Missing email");
+  await setDoc(doc(db,"accessByEmail",key), { email:key, teams:data, updatedAt:serverTimestamp(), updatedBy:auth.currentUser?.email||"unknown" }, { merge:true });
+}
 async function fbLoadMyUser(uid) { try { const d=await getDoc(doc(db,"users",uid)); return d.exists() ? d.data() : null; } catch(e) { return null; } }
 
 // ── TIGER LOGO (embedded base64) ──────────────────────────────
@@ -988,7 +1034,7 @@ const D = { pt:"run", bc:null, rec:null, passRes:null, yards:null, tack:null, ta
 const GN = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
 
 const ADMIN_EMAIL = "levigrammer@gmail.com";
-function isAdmin(){ return (auth.currentUser?.email||"").toLowerCase() === ADMIN_EMAIL; }
+function isAdmin(){ return emailKey(auth.currentUser?.email) === ADMIN_EMAIL; }
 function canAccessTeam(teamId){
   if(isAdmin()) return true;
   const access = S.currentUserAccess || {};
@@ -1116,6 +1162,12 @@ function authReady(){
     try{ await sendPasswordResetEmail(auth, email); showAuthError("Password reset email sent."); }
     catch(e){ showAuthError(niceAuthError(e)); }
   };
+  const logoutBtn=$("logoutBtn");
+  if(logoutBtn) logoutBtn.onclick = async () => { try{ await flushSave("logout"); }catch(e){} await signOut(auth); };
+  const themeBtn=$("themeBtn");
+  if(themeBtn) themeBtn.onclick = () => { document.body.classList.toggle("sunny"); localStorage.setItem("snaptrack-theme", document.body.classList.contains("sunny") ? "sunny" : "dark"); renderThemeButton(); };
+  if(localStorage.getItem("snaptrack-theme")==="sunny") document.body.classList.add("sunny");
+  renderThemeButton();
   onAuthStateChanged(auth, async user => {
     const authed = !!user;
     $("authScreen").classList.toggle("hidden", authed);
@@ -1182,9 +1234,11 @@ async function flushSave(reason="manual") {
 }
 async function hydrateCloud() {
   const me = auth.currentUser ? await fbLoadMyUser(auth.currentUser.uid) : null;
-  S.currentUserAccess = isAdmin() ? {"team-1-2":true,"team-3-4":true,"team-5-6":true} : (me?.teams || {});
-  const [presets, active, games, users] = await Promise.all([fbLoadPresets(), fbLoadActive(), fbLoad(), isAdmin()?fbLoadUsers():Promise.resolve([])]);
-  S.adminUsers = users;
+  S.currentUserAccess = isAdmin() ? ALL_TEAM_ACCESS : (me?.teams || {});
+  const [presets, active, games, users, emailAccess] = await Promise.all([fbLoadPresets(), fbLoadActive(), fbLoad(), isAdmin()?fbLoadUsers():Promise.resolve([]), isAdmin()?fbLoadEmailAccess():Promise.resolve([])]);
+  const seen=new Set();
+  S.adminUsers = [...users, ...emailAccess].filter(u=>{ const k=emailKey(u.email)||u.uid; if(seen.has(k)) return false; seen.add(k); return true; });
+  if(isAdmin() && !S.adminUsers.some(u=>emailKey(u.email)===ADMIN_EMAIL)) S.adminUsers.unshift({uid:auth.currentUser.uid,email:ADMIN_EMAIL,name:"Levi",teams:ALL_TEAM_ACCESS});
   presets.forEach(p=>{
     if(!p._teamId || !canAccessTeam(p._teamId)) return;
     S.teamGroups[p._teamId] = p.teamGroups || S.teamGroups[p._teamId] || {};
@@ -1465,6 +1519,8 @@ function teamTotals(playLog) {
 }
 
 // ── RENDER ────────────────────────────────────────────────────
+function renderThemeButton(){ const b=$("themeBtn"); if(b) b.textContent = document.body.classList.contains("sunny") ? "Dark Mode" : "Sun Mode"; }
+
 function render() {
   renderSyncStatus();
   const sel=selCnt(), u5=under5().length, ok=sel===S.gameType, r=ready();
@@ -1522,7 +1578,7 @@ function renderGame() {
       c.onclick=()=>selectTeam(team);
       $("teamCards").appendChild(c);
     });
-    if(!allowedTeams.length) $("teamCards").innerHTML='<div class="note">No team access yet. Ask Levi to grant 1/2, 3/4, or 5/6 access.</div>';
+    if(!allowedTeams.length) $("teamCards").innerHTML='<div class="note">No team access for this account yet.</div>';
     return;
   }
 
@@ -1700,17 +1756,30 @@ function renderDashboard(){
   document.querySelectorAll("#dashBody .view-b").forEach(b=>b.onclick=()=>openView(shown.find(g=>g.id===b.dataset.id)));
 }
 function renderAdmin(){
-  if(!isAdmin()){ $("adminUsers").innerHTML='<div class="note">Admin only.</div>'; return; }
+  if(!isAdmin()) return;
+  const addBtn=$("adminAddBtn"), emailIn=$("adminEmailIn");
+  if(addBtn && !addBtn.dataset.bound){
+    addBtn.dataset.bound="1";
+    addBtn.onclick=async()=>{
+      const email=emailKey(emailIn?.value);
+      if(!email) return alert("Enter an email first.");
+      const row={uid:"email:"+email,email,pending:true,teams:{}};
+      if(!S.adminUsers.some(u=>emailKey(u.email)===email)) S.adminUsers.push(row);
+      renderAdmin();
+      try{ await fbSaveEmailAccess(email, {}); markSync("saved", `Access row added for ${email}`); }
+      catch(e){ alert("Could not add access row. Check Firestore rules for accessByEmail."); }
+    };
+  }
   const users = S.adminUsers || [];
-  if(!users.length){ $("adminUsers").innerHTML='<div class="note">No users found yet. Have coaches create/sign in once.</div>'; return; }
-  $("adminUsers").innerHTML = users.map(u=>`<div class="admin-user" data-uid="${u.uid}"><div class="admin-user-title">${esc(u.email||"No email")}</div><div class="admin-user-sub">${u.name?esc(u.name)+" · ":""}${u.uid===auth.currentUser?.uid?"You / admin":"Coach"}</div><div class="access-row">${TEAMS.map(t=>`<button class="btn access-btn ${(u.teams&&u.teams[t.id])?"on":""}" data-uid="${u.uid}" data-team="${t.id}">${teamShort(t.id)}</button>`).join("")}</div></div>`).join("");
+  if(!users.length){ $("adminUsers").innerHTML='<div class="note">No users found yet. Add a coach email above, or have them sign in once.</div>'; return; }
+  $("adminUsers").innerHTML = users.map(u=>`<div class="admin-user" data-uid="${esc(u.uid)}"><div class="admin-user-title">${esc(u.email||"No email")}</div><div class="admin-user-sub">${u.pending?"Pending / email access":(u.name?esc(u.name)+" · ":"")}${emailKey(u.email)===ADMIN_EMAIL?"You / admin":"Coach"}</div><div class="access-row">${TEAMS.map(t=>`<button class="btn access-btn ${(u.teams&&u.teams[t.id])?"on":""}" data-uid="${esc(u.uid)}" data-email="${esc(u.email||"")}" data-team="${t.id}">${teamShort(t.id)}</button>`).join("")}</div></div>`).join("");
   document.querySelectorAll(".access-btn").forEach(b=>b.onclick=async()=>{
-    const u=S.adminUsers.find(x=>x.uid===b.dataset.uid); if(!u) return;
+    const u=S.adminUsers.find(x=>String(x.uid)===b.dataset.uid || emailKey(x.email)===emailKey(b.dataset.email)); if(!u) return;
     u.teams={...(u.teams||{})}; u.teams[b.dataset.team]=!u.teams[b.dataset.team];
     b.classList.toggle("on", !!u.teams[b.dataset.team]);
     b.disabled=true;
-    try{ await fbSaveUserAccess(u.uid, u.teams); markSync("saved", `Access saved for ${u.email||"user"}`); }
-    catch(e){ alert("Could not save access. Check Firestore rules."); }
+    try{ await fbSaveUserAccess(u.uid, u.teams, u.email); markSync("saved", `Access saved for ${u.email||"user"}`); }
+    catch(e){ alert("Could not save access. Check Firestore rules for users/accessByEmail."); }
     finally{ b.disabled=false; }
   });
 }
