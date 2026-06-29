@@ -747,6 +747,7 @@
         <input id="adminEmailIn" type="email" placeholder="add coach email manually" />
         <button class="btn blue" id="adminAddBtn" type="button">Add</button>
       </div>
+      <button class="btn" id="adminRefreshBtn" type="button" style="margin-bottom:10px;">Refresh People</button>
       <div id="adminUsers"><div class="note">Loading users…</div></div>
     </div>
   </div>
@@ -1038,6 +1039,7 @@ const D = { pt:"run", bc:null, rec:null, passRes:null, yards:null, tack:null, ta
 const GN = { offense:"OFF", defense:"DEF", kickoff:"KO", kickReturn:"KR", special:"SPL", secondTeam:"2ND" };
 
 const ADMIN_EMAIL = "levigrammer@gmail.com";
+const SEEDED_AUTH_EMAILS = ["skylor.louis.johnson@gmail.com"]; // Firebase Auth cannot be listed from a static web app; seed known existing accounts here.
 function isAdmin(){ return emailKey(auth.currentUser?.email) === ADMIN_EMAIL; }
 function canAccessTeam(teamId){
   if(isAdmin()) return true;
@@ -1267,9 +1269,10 @@ async function hydrateCloud() {
   const me = auth.currentUser ? await fbLoadMyUser(auth.currentUser.uid) : null;
   S.currentUserAccess = isAdmin() ? ALL_TEAM_ACCESS : (me?.teams || {});
   const [presets, active, games, users, emailAccess] = await Promise.all([fbLoadPresets(), fbLoadActive(), fbLoad(), isAdmin()?fbLoadUsers():Promise.resolve([]), isAdmin()?fbLoadEmailAccess():Promise.resolve([])]);
+  const seeded = isAdmin() ? SEEDED_AUTH_EMAILS.map(email=>({uid:"email:"+emailKey(email), email:emailKey(email), pending:true, teams:{}})) : [];
   const seen=new Set();
-  S.adminUsers = [...users, ...emailAccess].filter(u=>{ const k=emailKey(u.email)||u.uid; if(seen.has(k)) return false; seen.add(k); return true; });
-  if(isAdmin() && !S.adminUsers.some(u=>emailKey(u.email)===ADMIN_EMAIL)) S.adminUsers.unshift({uid:auth.currentUser.uid,email:ADMIN_EMAIL,name:"Levi",teams:ALL_TEAM_ACCESS});
+  S.adminUsers = [...users, ...emailAccess, ...seeded].filter(u=>{ const k=emailKey(u.email)||u.uid; if(seen.has(k)) return false; seen.add(k); return true; });
+  ensureAdminUsers();
   presets.forEach(p=>{
     if(!p._teamId || !canAccessTeam(p._teamId)) return;
     S.teamGroups[p._teamId] = p.teamGroups || S.teamGroups[p._teamId] || {};
@@ -1790,9 +1793,29 @@ function renderDashboard(){
   $("dashBody").innerHTML=html;
   document.querySelectorAll("#dashBody .view-b").forEach(b=>b.onclick=()=>openView(shown.find(g=>g.id===b.dataset.id)));
 }
+function ensureAdminUsers(){
+  if(!isAdmin()) return;
+  S.adminUsers = Array.isArray(S.adminUsers) ? S.adminUsers : [];
+  const curEmail=emailKey(auth.currentUser?.email || ADMIN_EMAIL);
+  if(!S.adminUsers.some(u=>emailKey(u.email)===ADMIN_EMAIL)){
+    S.adminUsers.unshift({uid:auth.currentUser?.uid||"admin", email:ADMIN_EMAIL, name:"Levi Grammer", teams:ALL_TEAM_ACCESS});
+  }
+  SEEDED_AUTH_EMAILS.forEach(email=>{
+    const key=emailKey(email);
+    if(key && !S.adminUsers.some(u=>emailKey(u.email)===key)){
+      S.adminUsers.push({uid:"email:"+key, email:key, pending:true, teams:{}});
+    }
+  });
+}
+
 function renderAdmin(){
   if(!isAdmin()) return;
-  const addBtn=$("adminAddBtn"), emailIn=$("adminEmailIn");
+  ensureAdminUsers();
+  const addBtn=$("adminAddBtn"), emailIn=$("adminEmailIn"), refreshBtn=$("adminRefreshBtn");
+  if(refreshBtn && !refreshBtn.dataset.bound){
+    refreshBtn.dataset.bound="1";
+    refreshBtn.onclick=async()=>{ await hydrateCloud(); ensureAdminUsers(); renderAdmin(); markSync("saved", "People refreshed"); };
+  }
   if(addBtn && !addBtn.dataset.bound){
     addBtn.dataset.bound="1";
     addBtn.onclick=async()=>{
@@ -1806,7 +1829,7 @@ function renderAdmin(){
     };
   }
   const users = S.adminUsers || [];
-  if(!users.length){ $("adminUsers").innerHTML='<div class="note">No accounts found yet. Add a coach email above, or have them sign in once.</div>'; return; }
+  if(!users.length){ $("adminUsers").innerHTML='<div class="note">No accounts found yet. Add a coach email above.</div>'; return; }
   $("adminUsers").innerHTML = users.map(u=>{
     const admin = emailKey(u.email)===ADMIN_EMAIL;
     const display = u.name || (u.email ? String(u.email).split("@")[0] : "Coach");
