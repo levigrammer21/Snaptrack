@@ -1,0 +1,25 @@
+SnapTrack v1.0.3
+Build Date: 2026-06-29 23:00 UTC
+Database Version: 1
+Firebase Rules: No changes required from v1.0.2
+
+Files Changed:
+- index.html
+- app.js
+- styles.css
+- manifest.json
+- icon-192.png
+- icon-512.png
+- README.txt
+- BUILD.txt
+- CHANGELOG.txt
+- TEST.txt
+
+Files Not Changed:
+- firebase.js
+- stats.js
+- admin.js
+- firestore.rules
+
+Upload Instructions:
+Replace all root-level files in GitHub Pages with the files from this zip.

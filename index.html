@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SnapTrack v1.0.2</title>
+  <title>SnapTrack v1.0.3</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="icon" href="./icon-192.png">
@@ -12,7 +12,7 @@
 </head>
 <body class="auth-lock">
   <section id="authScreen" class="auth-screen">
-    <div class="brand-mark">ST</div>
+    <img class="brand-mark brand-img" src="./icon-192.png" alt="SnapTrack logo">
     <div class="auth-brand">SNAP<em>TRACK</em></div>
     <div class="auth-tag">Snap proof. Box scores. Season truth.</div>
     <div class="auth-card">
@@ -24,14 +24,14 @@
       <button id="googleBtn" class="btn light big">Continue with Google</button>
       <button id="forgotBtn" class="link-btn">Forgot password?</button>
     </div>
-    <div class="version">SnapTrack v1.0.2</div>
+    <div class="version">SnapTrack v1.0.3</div>
   </section>
 
   <div id="toast" class="toast hidden"></div>
 
   <main class="app">
     <header class="topbar">
-      <div class="brandline"><div class="mini-logo">ST</div><div><div class="logo">Snap<em>Track</em></div><div id="subline" class="subline">Ready</div></div></div>
+      <div class="brandline"><img class="mini-logo brand-img" src="./icon-192.png" alt="SnapTrack"><div><div class="logo">Snap<em>Track</em></div><div id="subline" class="subline">Ready</div></div></div>
       <div class="top-actions">
         <button id="peopleBtn" class="icon-btn hidden" title="People">👥</button>
         <button id="themeBtn" class="icon-btn" title="Sun mode">☀️</button>
@@ -110,7 +110,7 @@
       <div id="timelineList" class="timeline"></div>
     </section>
 
-    <footer class="footer">SnapTrack v1.0.2 · root-level build</footer>
+    <footer class="footer">SnapTrack v1.0.3 · root-level build</footer>
   </main>
 
   <div id="snapDock" class="snap-dock hidden">
