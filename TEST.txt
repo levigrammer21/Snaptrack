@@ -1,17 +1,13 @@
-SnapTrack v1.0.3 Test Checklist
+SnapTrack v1.0.4 Test Checklist
 
-After upload:
-[ ] Browser tab says SnapTrack v1.0.3
-[ ] Header logo shows the new ST logo
-[ ] Login works
-[ ] People/admin button appears for Levi
-[ ] Select 1/2 and confirm SNAP requires exactly 8 players
-[ ] Select 3/4 or 5/6 and confirm SNAP requires exactly 11 players
-[ ] Start game
-[ ] Record snap
-[ ] Undo snap
-[ ] Timeline shows play
-[ ] Player profile opens from Season
-[ ] Boxscore opens from Games
-[ ] CSV export downloads
-[ ] Sun mode still works
+[ ] Browser tab says SnapTrack v1.0.4
+[ ] Footer/version says SnapTrack v1.0.4
+[ ] Open Roster
+[ ] Pick a group preset
+[ ] Tap player number, name, blank row space, and snap count area
+[ ] Each tap toggles the correct player
+[ ] Tap several players quickly
+[ ] UI updates immediately
+[ ] Preset persists after refresh/relogin
+[ ] SNAP still requires exact player count
+[ ] Game player selection still works

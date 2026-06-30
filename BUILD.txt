@@ -1,25 +1,31 @@
-SnapTrack v1.0.3
-Build Date: 2026-06-29 23:00 UTC
-Database Version: 1
-Firebase Rules: No changes required from v1.0.2
+SnapTrack v1.0.4
 
-Files Changed:
-- index.html
-- app.js
-- styles.css
-- manifest.json
-- icon-192.png
-- icon-512.png
-- README.txt
-- BUILD.txt
-- CHANGELOG.txt
-- TEST.txt
+Build Date
+2026-06-29
 
-Files Not Changed:
-- firebase.js
-- stats.js
-- admin.js
-- firestore.rules
+Files Changed
+index.html
+app.js
+styles.css
+manifest.json
+README.txt
+BUILD.txt
+CHANGELOG.txt
+TEST.txt
 
-Upload Instructions:
-Replace all root-level files in GitHub Pages with the files from this zip.
+Files Not Changed
+firebase.js
+stats.js
+admin.js
+firestore.rules
+icon-192.png
+icon-512.png
+
+Firebase
+No rules changes required.
+
+Database
+No schema changes.
+
+Primary Fix
+Preset/player-card touch targets corrected. Roster preset taps now update immediately and cloud-save with a short debounce.
