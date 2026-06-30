@@ -1,7 +1,4 @@
-SnapTrack v1.0.4
-
-Build Date
-2026-06-29
+SnapTrack v1.0.5
 
 Files Changed
 index.html
@@ -22,10 +19,11 @@ icon-192.png
 icon-512.png
 
 Firebase
-No rules changes required.
+No rule changes required.
 
 Database
-No schema changes.
+No database changes required.
 
-Primary Fix
-Preset/player-card touch targets corrected. Roster preset taps now update immediately and cloud-save with a short debounce.
+Notes
+- Touch handling for game/player preset cards moved to stable delegated touch/click events.
+- Quick yard presets restored in the stat modal.

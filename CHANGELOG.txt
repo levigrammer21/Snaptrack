@@ -1,11 +1,19 @@
-SnapTrack v1.0.3
+SnapTrack v1.0.5
 
-Changed:
-- Installed the new ST logo across the app.
-- Updated browser tab title to SnapTrack v1.0.3.
-- Updated manifest app name to SnapTrack v1.0.3.
-- Updated app version constant to 1.0.3.
-- Updated footer version to v1.0.3.
-- Added build/test notes to root-level package.
+Fixed
+- Player touch targets could drift/misfire after using the app for a while.
+- Roster preset selection now uses stable delegated touch handling.
+- Player row children no longer steal touches.
 
-No Firebase rule changes required.
+Added
+- Quick yards returned to the play stat modal: -5, -3, -1, 0, 1, 3, 5, 7, 10, 15+.
+
+Changed Files
+index.html
+app.js
+styles.css
+manifest.json
+README.txt
+BUILD.txt
+CHANGELOG.txt
+TEST.txt

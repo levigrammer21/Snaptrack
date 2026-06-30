@@ -1,13 +1,16 @@
-SnapTrack v1.0.4 Test Checklist
+SnapTrack v1.0.5 Test Checklist
 
-[ ] Browser tab says SnapTrack v1.0.4
-[ ] Footer/version says SnapTrack v1.0.4
+[ ] Browser tab says SnapTrack v1.0.5
+[ ] Footer/version says SnapTrack v1.0.5
 [ ] Open Roster
-[ ] Pick a group preset
-[ ] Tap player number, name, blank row space, and snap count area
-[ ] Each tap toggles the correct player
-[ ] Tap several players quickly
-[ ] UI updates immediately
-[ ] Preset persists after refresh/relogin
-[ ] SNAP still requires exact player count
-[ ] Game player selection still works
+[ ] Select a group preset
+[ ] Tap players near top, middle, and bottom of the list
+[ ] Scroll roster, then tap players again
+[ ] Switch groups and repeat
+[ ] Start/resume a game
+[ ] Tap players on the game screen after scrolling
+[ ] SNAP opens stat modal
+[ ] Quick yard buttons set yards correctly
+[ ] +/- still adjust yards correctly
+[ ] Save Play records the selected yards
+[ ] No Firebase rule changes needed
