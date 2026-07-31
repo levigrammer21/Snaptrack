@@ -41,7 +41,7 @@ const colors=['#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2'];
 const baseGroups={offense:{name:'Offense',color:'#2563eb',players:[]},defense:{name:'Defense',color:'#16a34a',players:[]},kickoff:{name:'Kickoff',color:'#d97706',players:[]},kickReturn:{name:'Kick Return',color:'#0891b2',players:[]},special:{name:'Special',color:'#7c3aed',players:[]},secondTeam:{name:'2nd Team',color:'#64748b',players:[]}};
 const ROSTERS={
  '1/2':[
-  ['7','Ronin Massey'],['8','Brooks Grill'],['11','Legend Griffin'],['14','Urban Niemann'],['16','Carson Russell'],['18','Kace Hilbert'],['21','Reid Grammer'],['22','Caston Hamilton'],['24','Niko Grant'],['30','Dalton Gonzales'],['40','Ledger Johnson'],['42','Reece Fasching'],['55','Russ Pearman'],['66','Dillon Campbell'],['67','Jamesyn Cullum'],['93','Phoneix Brackeen'],['99','Waylon Lyon']
+  ['7','Ronin Massey'],['8','Brooks Grill'],['11','Legend Griffin'],['14','Urban Niemann'],['16','Carson Russell'],['18','Kace Hilbert'],['21','Reid Grammer'],['22','Caston Hamilton'],['24','Niko Grant'],['40','Ledger Johnson'],['42','Reece Fasching'],['55','Russ Pearman'],['66','Dillon Campbell'],['67','Jamesyn Cullum'],['93','Phoneix Brackeen'],['99','Waylon Lyon']
  ],
  '3/4':[
   ['0','Jelani Drew'],['1','Jorden McElvany'],['3','Lincoln Eskridge'],['4','Brock Monson'],['5','Braxton Bailey'],['6','Zayn Sanders'],['7','Gunner Williams'],['8','Evan Grammer'],['9','Rollin Sanders'],['10','Landry Eskridge'],['11','Gaviston Clark'],['13','Sawyer Redd'],['15','Jessen Cullum'],['17','Colton Meadows'],['18','Ellis Seward'],['20','Kayden Williams'],['21','Carter McElvany'],['22','Liam George'],['25','Jaxon Beck'],['27','Conrad Pennington'],['28','Logan Wells'],['33','Logan Grotts'],['37','Purpose Birchmier'],['41','Carson Burleson'],['44','Jaiden Palmer'],['67','James Wright'],['89','Jasper Maples'],['93','Boston McKnight'],['99','Kaydin Mash']
@@ -144,3 +144,9 @@ bindTap('#rosterPlayers','.player-card',card=>{const arr=state.groups[state.edit
 
 $('#peopleBtn').onclick=async()=>{await renderAdmin({currentUser:state.user,accessCache:state.accessCache,container:$('#adminPeople'),toast}); $('#adminModal').classList.remove('hidden');}; $('#addUserBtn').onclick=async()=>{await addManualUser($('#manualUserEmail').value,state.accessCache,toast); $('#manualUserEmail').value=''; await renderAdmin({currentUser:state.user,accessCache:state.accessCache,container:$('#adminPeople'),toast});};
 $$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden')); window.addEventListener('online',()=>{if(state.dirty)cloudSave('online');}); window.addEventListener('offline',()=>{if(state.current)persistDraft();setSaveStatus('offline');}); document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.dirty)persistDraft();}); window.addEventListener('beforeunload',()=>{if(state.dirty)persistDraft();}); setInterval(()=>{if(state.dirty){persistDraft();if(navigator.onLine)cloudSave('periodic');}},15000);
+
+
+// Edit roster (temporary)
+document.getElementById('editRosterBtn')?.addEventListener('click',()=>{
+  alert('Roster editor coming in next build. For now, roster data is stored in app.js.');
+});
