@@ -3,26 +3,37 @@ import { gameStats, seasonStats, boxscoreHtml, gameCsv, seasonCsv, download } fr
 import { renderAdmin, addManualUser } from './admin.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const APP_VERSION='1.0.5';
+const APP_VERSION='1.0.6';
 const VERSION=`v${APP_VERSION}`;
 let lastTouchAt=0;
 function bindTap(containerSelector, cardSelector, handler){
   const el=$(containerSelector);
   if(!el)return;
-  el.onclick=null;
-  el.ontouchend=null;
-  el.addEventListener('touchend',e=>{
+  let gesture=null;
+  const reset=()=>{gesture=null;};
+  el.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
     const card=e.target.closest(cardSelector);
     if(!card||!el.contains(card))return;
+    gesture={pointerId:e.pointerId,card,x:e.clientX,y:e.clientY,moved:false};
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!gesture||gesture.pointerId!==e.pointerId)return;
+    if(Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>10)gesture.moved=true;
+  });
+  el.addEventListener('pointercancel',reset);
+  el.addEventListener('pointerup',e=>{
+    if(!gesture||gesture.pointerId!==e.pointerId)return;
+    const g=gesture; reset();
+    const card=e.target.closest(cardSelector);
+    if(g.moved||card!==g.card)return;
     lastTouchAt=Date.now();
-    e.preventDefault();
     handler(card,e);
-  },{passive:false});
+  });
   el.addEventListener('click',e=>{
-    if(Date.now()-lastTouchAt<450)return;
+    if(Date.now()-lastTouchAt<500)return;
     const card=e.target.closest(cardSelector);
     if(!card||!el.contains(card))return;
-    e.preventDefault();
     handler(card,e);
   });
 }
@@ -45,8 +56,27 @@ function schedulePresetSave(){ clearTimeout(presetSaveTimer); setSaveStatus('sav
 
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),1600)}
 function setSaveStatus(s){const el=$('#saveStatus'); el.className='save-pill '+s; el.textContent={saved:'Saved',saving:'Saving...',dirty:'Unsaved',offline:'Offline'}[s]||s;}
-function markDirty(){state.dirty=true; setSaveStatus(navigator.onLine?'dirty':'offline');}
-async function cloudSave(reason='save'){if(!state.current?.id)return; try{setSaveStatus('saving'); state.current.updatedBy=state.user.uid; state.current.updatedByEmail=state.user.email; await saveGame(state.current.id,cleanGame(state.current)); state.dirty=false; setSaveStatus('saved');}catch(e){console.error(e);setSaveStatus('offline');}}
+function draftKey(id=state.current?.id){return id&&state.user?.uid?`snaptrack:draft:${state.user.uid}:${id}`:null;}
+function persistDraft(){const key=draftKey(); if(!key||!state.current)return; try{localStorage.setItem(key,JSON.stringify({game:state.current,selected:[...state.selected],savedAt:Date.now()}));}catch(e){console.error('Local draft save failed',e);}}
+function readDraft(id){const key=draftKey(id); if(!key)return null; try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
+function clearDraft(id=state.current?.id){const key=draftKey(id); if(key)localStorage.removeItem(key);}
+function markDirty(){state.dirty=true; persistDraft(); setSaveStatus(navigator.onLine?'dirty':'offline');}
+function withTimeout(promise,ms=8000){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('Save timed out')),ms))]);}
+async function cloudSave(reason='save'){
+  if(!state.current?.id)return false;
+  state.current.updatedBy=state.user.uid;
+  state.current.updatedByEmail=state.user.email;
+  markDirty();
+  if(!navigator.onLine){setSaveStatus('offline');return false;}
+  try{
+    setSaveStatus('saving');
+    await withTimeout(saveGame(state.current.id,cleanGame(state.current)));
+    state.dirty=false;
+    clearDraft();
+    setSaveStatus('saved');
+    return true;
+  }catch(e){console.error(`${reason} save failed`,e);persistDraft();setSaveStatus('offline');return false;}
+}
 function cleanGame(g){const {id,...rest}=g; return rest;}
 function allowedTeams(){if(state.access?.admin)return TEAMS; return TEAMS.filter(t=>state.access?.teams?.[t]);}
 function canUseTeam(t){return state.access?.admin||!!state.access?.teams?.[t];}
@@ -73,7 +103,7 @@ function renderGame(){renderLiveResume(); renderGroups('#loadGroups',false); ren
 function renderLiveResume(){const live=state.games.find(g=>g.status==='live'&&canUseTeam(g.team)); const box=$('#liveResume'); if(!live||state.current?.id===live.id){box.classList.add('hidden');return;} box.classList.remove('hidden'); box.innerHTML=`<div class="section-kicker">🟢 Live Game</div><h2>${live.team} ${live.name||''}</h2><p class="subline">Play ${(live.plays||[]).length} · Last updated ${live.updatedByEmail||'coach'}</p><button class="btn primary" id="resumeLiveBtn">Resume</button>`; $('#resumeLiveBtn').onclick=()=>openGame(live);}
 async function startGame(practice=false){if(!canUseTeam(state.team))return toast('No access to this team'); const name=$('#gameName').value|| (practice?'Practice':'Game'); const id=await createGame({team:state.team,name,mode:practice?'practice':'game',status:'live',date:nowIso(),plays:[],groups:state.groups,createdBy:state.user.uid,createdByEmail:state.user.email,updatedBy:state.user.uid,updatedByEmail:state.user.email}); const g={id,team:state.team,name,mode:practice?'practice':'game',status:'live',date:nowIso(),plays:[],groups:state.groups}; openGame(g); toast('Game started');}
 $('#startGameBtn').onclick=()=>startGame(false); $('#practiceBtn').onclick=()=>startGame(true);
-function openGame(g){state.current=JSON.parse(JSON.stringify(g)); state.team=g.team; state.groups=g.groups||state.groups||structuredClone(baseGroups); state.selected=new Set(); state.lastCloudUpdate=g.updatedAt?.seconds||Date.now()/1000; if(state.unsubGame)state.unsubGame(); state.unsubGame=listenGame(g.id,cg=>{if(!state.current||cg.id!==state.current.id)return; const stamp=cg.updatedAt?.seconds||0; const localByMe=cg.updatedBy===state.user.uid; if(stamp>state.lastCloudUpdate+1 && !localByMe){$('#conflictBanner').classList.remove('hidden'); $('#reloadCloudBtn').onclick=()=>{state.current=JSON.parse(JSON.stringify(cg)); state.lastCloudUpdate=stamp; $('#conflictBanner').classList.add('hidden'); renderAll();};} state.lastCloudUpdate=Math.max(state.lastCloudUpdate,stamp);}); state.page='game'; renderPages();}
+function openGame(g){const draft=readDraft(g.id); const useDraft=draft?.game&&((draft.game.plays||[]).length>(g.plays||[]).length||draft.game.status!==g.status); state.current=JSON.parse(JSON.stringify(useDraft?draft.game:g)); state.team=state.current.team; state.groups=state.current.groups||state.groups||structuredClone(baseGroups); state.selected=new Set(useDraft?(draft.selected||[]):[]); state.dirty=!!useDraft; if(useDraft){setSaveStatus(navigator.onLine?'dirty':'offline');toast('Recovered unsaved local scoring');} state.lastCloudUpdate=g.updatedAt?.seconds||Date.now()/1000; if(state.unsubGame)state.unsubGame(); state.unsubGame=listenGame(g.id,cg=>{if(!state.current||cg.id!==state.current.id)return; const stamp=cg.updatedAt?.seconds||0; const localByMe=cg.updatedBy===state.user.uid; if(stamp>state.lastCloudUpdate+1 && !localByMe){$('#conflictBanner').classList.remove('hidden'); $('#reloadCloudBtn').onclick=()=>{state.current=JSON.parse(JSON.stringify(cg)); state.lastCloudUpdate=stamp; $('#conflictBanner').classList.add('hidden'); renderAll();};} state.lastCloudUpdate=Math.max(state.lastCloudUpdate,stamp);}); state.page='game'; renderPages();}
 
 $$('[data-phase]').forEach(b=>b.onclick=()=>{state.phase=b.dataset.phase; renderGame();});
 function renderGroups(sel, edit){const el=$(sel); el.innerHTML=Object.entries(state.groups).map(([k,g])=>`<button class="chip ${edit?state.editGroup===k?'on':'': ''}" data-grp="${k}" style="border-color:${g.color};"><span>${g.name}</span><small>${g.players.length} players</small></button>`).join(''); el.querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{const k=b.dataset.grp; if(edit){state.editGroup=k; renderRoster();} else {state.selected=new Set(state.groups[k].players); renderGame();}});}
@@ -84,11 +114,11 @@ function groupNamesFor(id){return Object.values(state.groups).filter(g=>g.player
 $('#playerSearch').oninput=renderPlayers; $('#clearFieldBtn').onclick=()=>{state.selected.clear(); renderGame();}; $('#manualSaveBtn').onclick=()=>cloudSave('manual');
 $('#endGameBtn').onclick=async()=>{if(!state.current)return; state.current.status='ended'; await cloudSave('end'); toast('Game ended'); renderAll();};
 $('#quickUndoBtn').onclick=undoSnap; $('#snapBtn').onclick=()=>{if(!fieldReady())return toast(fieldReadyMessage()); openStatModal();};
-function undoSnap(){if(!state.current?.plays?.length)return; state.current.plays.pop(); cloudSave('undo'); renderAll(); toast('Last snap undone');}
+function undoSnap(){if(!state.current?.plays?.length)return; state.current.plays.pop(); markDirty(); cloudSave('undo'); renderAll(); toast('Last snap undone');}
 function openStatModal(){state.stat={type:state.phase==='defense'?'defense':'run',yards:0,players:[...state.selected],phase:state.phase,result:'',defResult:'',primary:null,receiver:null,tackler:null,assist:null}; $('#statTitle').textContent=`Play #${(state.current.plays||[]).length+1}`; $('#statSub').textContent=`${state.phase.toUpperCase()} · ${state.selected.size} players`; $('#statModal').classList.remove('hidden'); renderStatModal();}
 function renderStatModal(){const st=state.stat; $('#offStats').classList.toggle('hidden',state.phase==='defense'); $('#defStats').classList.toggle('hidden',state.phase!=='defense'); $$('.stat-type [data-ptype]').forEach(b=>b.classList.toggle('on',b.dataset.ptype===st.type)); $('#receiverBlock').classList.toggle('hidden',st.type!=='pass'); $('#yardsInput').value=st.yards||0; $$('#quickYards [data-yard]').forEach(b=>b.classList.toggle('on',Number(b.dataset.yard)===Number(st.yards||0))); const players=roster(state.team).filter(p=>state.selected.has(p.id)); const mini=(target,field)=>{$(target).innerHTML=players.map(p=>`<button class="mini-player ${st[field]===p.id?'on':''}" data-pick="${field}" data-id="${p.id}">#${p.num}<br>${p.name.split(' ')[0]}</button>`).join('')}; mini('#primaryGrid','primary'); mini('#receiverGrid','receiver'); mini('#tacklerGrid','tackler'); mini('#assistGrid','assist'); $('#primaryLabel').textContent=st.type==='pass'?'Passer':'Ball Carrier'; $$('#statModal [data-pick]').forEach(b=>b.onclick=()=>{if(b.dataset.pick==='assist'&&!st.tackler)return toast('Pick a main tackler first'); st[b.dataset.pick]=st[b.dataset.pick]===b.dataset.id?null:b.dataset.id; renderStatModal();}); $$('#statModal [data-result]').forEach(b=>b.classList.toggle('on',b.dataset.result===st.result)); $$('#statModal [data-def]').forEach(b=>b.classList.toggle('on',b.dataset.def===st.defResult));}
 $$('.stat-type [data-ptype]').forEach(b=>b.onclick=()=>{state.stat.type=b.dataset.ptype; renderStatModal();}); $('#ydMinus').onclick=()=>{state.stat.yards=(Number(state.stat.yards)||0)-1;renderStatModal()}; $('#ydPlus').onclick=()=>{state.stat.yards=(Number(state.stat.yards)||0)+1;renderStatModal()}; $('#yardsInput').oninput=e=>state.stat.yards=Number(e.target.value)||0; $$('#quickYards [data-yard]').forEach(b=>b.onclick=()=>{state.stat.yards=Number(b.dataset.yard)||0;renderStatModal();}); $$('#statModal [data-result]').forEach(b=>b.onclick=()=>{state.stat.result=b.dataset.result;renderStatModal()}); $$('#statModal [data-def]').forEach(b=>b.onclick=()=>{state.stat.defResult=b.dataset.def;renderStatModal()}); $('#skipStatBtn').onclick=()=>savePlay(true); $('#savePlayBtn').onclick=()=>savePlay(false);
-async function savePlay(skip){const st=state.stat; if(!state.current)return; if(!fieldReady())return toast(fieldReadyMessage()); if(!skip&&state.phase==='defense'&&st.assist&&!st.tackler)return toast('Assist needs main tackler'); const play={id:crypto.randomUUID(),num:(state.current.plays||[]).length+1,at:nowIso(),phase:state.phase,players:[...state.selected],type:skip?'snap':st.type,yards:skip?0:Number(st.yards||0),result:st.result||'',primary:st.primary,receiver:st.receiver,tackler:st.tackler,assist:st.assist,defResult:st.defResult||'',scorer:state.user.email}; state.current.plays=[...(state.current.plays||[]),play]; $('#statModal').classList.add('hidden'); await cloudSave('snap'); renderAll();}
+async function savePlay(skip){const st=state.stat; if(!state.current)return; if(!fieldReady())return toast(fieldReadyMessage()); if(!skip&&state.phase==='defense'&&st.assist&&!st.tackler)return toast('Assist needs main tackler'); const play={id:crypto.randomUUID(),num:(state.current.plays||[]).length+1,at:nowIso(),phase:state.phase,players:[...state.selected],type:skip?'snap':st.type,yards:skip?0:Number(st.yards||0),result:st.result||'',primary:st.primary,receiver:st.receiver,tackler:st.tackler,assist:st.assist,defResult:st.defResult||'',scorer:state.user.email}; state.current.plays=[...(state.current.plays||[]),play]; markDirty(); $('#statModal').classList.add('hidden'); await cloudSave('snap'); renderAll();}
 
 function renderRoster(){renderGroups('#editGroups',true); const g=state.groups[state.editGroup]; const req=requiredPlayers(state.team); $('#groupProgress').textContent=g?`${g.name}: ${g.players.length}/${req} selected`:''; $('#rosterPlayers').innerHTML=roster(state.team).map(p=>playerHtml(p,g?.players.includes(p.id),snapCount(p.id))).join('');}
 $('#renameGroupBtn').onclick=()=>{const g=state.groups[state.editGroup]; $('#groupNameInput').value=g.name; $('#groupColors').innerHTML=colors.map(c=>`<button class="color-dot ${g.color===c?'on':''}" data-color="${c}" style="background:${c}"></button>`).join(''); $$('#groupColors [data-color]').forEach(b=>b.onclick=()=>{$$('#groupColors .color-dot').forEach(x=>x.classList.remove('on'));b.classList.add('on')}); $('#groupModal').classList.remove('hidden');}; $('#saveGroupBtn').onclick=async()=>{const c=$('#groupColors .on')?.dataset.color||state.groups[state.editGroup].color; state.groups[state.editGroup].name=$('#groupNameInput').value||state.groups[state.editGroup].name; state.groups[state.editGroup].color=c; await savePresets(state.team,{groups:state.groups}); $('#groupModal').classList.add('hidden'); renderAll(); toast('Group saved');};
@@ -108,4 +138,4 @@ bindTap('#gamePlayers','.player-card',card=>{const id=card.dataset.id; state.sel
 bindTap('#rosterPlayers','.player-card',card=>{const arr=state.groups[state.editGroup].players; const id=card.dataset.id; const i=arr.indexOf(id); i>=0?arr.splice(i,1):arr.push(id); markDirty(); renderRoster(); renderGame(); schedulePresetSave();});
 
 $('#peopleBtn').onclick=async()=>{await renderAdmin({currentUser:state.user,accessCache:state.accessCache,container:$('#adminPeople'),toast}); $('#adminModal').classList.remove('hidden');}; $('#addUserBtn').onclick=async()=>{await addManualUser($('#manualUserEmail').value,state.accessCache,toast); $('#manualUserEmail').value=''; await renderAdmin({currentUser:state.user,accessCache:state.accessCache,container:$('#adminPeople'),toast});};
-$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden')); window.addEventListener('online',()=>{if(state.dirty)cloudSave('online')}); window.addEventListener('offline',()=>setSaveStatus('offline'));
+$$('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden')); window.addEventListener('online',()=>{if(state.dirty)cloudSave('online');}); window.addEventListener('offline',()=>{if(state.current)persistDraft();setSaveStatus('offline');}); document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.dirty)persistDraft();}); window.addEventListener('beforeunload',()=>{if(state.dirty)persistDraft();}); setInterval(()=>{if(state.dirty){persistDraft();if(navigator.onLine)cloudSave('periodic');}},15000);
