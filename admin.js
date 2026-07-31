@@ -1,7 +1,9 @@
-import { TEAMS, ADMIN_EMAIL, loadUsers, saveAccess } from './firebase.js';
+import { TEAMS, ADMIN_EMAIL, loadUsers, loadAccesses, saveAccess } from './firebase.js';
 const norm=e=>(e||'').trim().toLowerCase();
 export async function renderAdmin({currentUser, accessCache, container, toast}){
-  const users=await loadUsers();
+  const [users,freshAccess]=await Promise.all([loadUsers(),loadAccesses()]);
+  Object.keys(accessCache||{}).forEach(k=>delete accessCache[k]);
+  Object.assign(accessCache,freshAccess);
   const emails=new Set([ADMIN_EMAIL,currentUser.email,...users.map(u=>u.email),...Object.keys(accessCache||{})]);
   container.innerHTML=[...emails].sort().map(email=>personCard(email,accessCache[email]||{email,teams:{},admin:email===ADMIN_EMAIL})).join('');
   container.querySelectorAll('[data-toggle]').forEach(btn=>btn.onclick=async()=>{const email=btn.closest('.person').dataset.email; const key=btn.dataset.toggle; const a=accessCache[email]||{email,teams:{}}; if(key==='admin')a.admin=!a.admin; else a.teams={...(a.teams||{}),[key]:!(a.teams||{})[key]}; if(email===ADMIN_EMAIL){a.admin=true; a.teams={'1/2':true,'3/4':true,'5/6':true};}

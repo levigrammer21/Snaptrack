@@ -1,3 +1,8 @@
+v1.0.7
+- Sanitize saved groups and on-field selections against the current roster so stale player IDs cannot satisfy the snap count or steal snap credit.
+- Reload real access records whenever the People screen opens.
+- Added admin-only deletion for archived or live games with confirmation.
+
 SnapTrack v1.0.5
 
 Fixed
