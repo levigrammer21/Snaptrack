@@ -1,24 +1,30 @@
-v1.0.7
-- Sanitize saved groups and on-field selections against the current roster so stale player IDs cannot satisfy the snap count or steal snap credit.
-- Reload real access records whenever the People screen opens.
-- Added admin-only deletion for archived or live games with confirmation.
-
-SnapTrack v1.0.5
-
-Fixed
-- Player touch targets could drift/misfire after using the app for a while.
-- Roster preset selection now uses stable delegated touch handling.
-- Player row children no longer steal touches.
+SnapTrack v1.1.0
 
 Added
-- Quick yards returned to the play stat modal: -5, -3, -1, 0, 1, 3, 5, 7, 10, 15+.
+- Add Preset creates additional reusable roster/on-field presets beyond the six defaults.
+- Run and completed-pass plays can record Touchdown and Fumble outcomes.
+- Touchdowns and fumbles appear in player profiles, box scores, timelines, and CSV exports.
+- The Game screen lists every other accessible live game so concurrent 1/2 and 3/4 games remain visible and independently resumable.
 
-Changed Files
-index.html
-app.js
-styles.css
-manifest.json
-README.txt
-BUILD.txt
-CHANGELOG.txt
-TEST.txt
+Fixed
+- Version labels are now synchronized across the page, app constant, manifest, and cache-busting URLs.
+- Custom presets are preserved when loaded; previous sanitizing discarded unknown preset keys.
+- A delayed preset save now captures its original team and cannot save a 1/2 preset into 3/4 after a quick team switch.
+- Saving a preset no longer clears an unrelated unsaved-game flag.
+
+Changed
+- Removed unused imports and duplicate touch-target CSS rules.
+- Removed the unused 1254x1254 apple-touch-icon.png from the release archive. icon-192.png remains the declared Apple/PWA icon.
+
+Compatibility
+- Existing touchdown plays stored with result="td" still count correctly.
+- No database migration is required.
+
+Previous v1.0.7
+- Sanitized saved groups and on-field selections against the current roster.
+- Reloaded access records whenever the People screen opens.
+- Added admin-only deletion for archived or live games.
+
+Previous v1.0.5
+- Stabilized roster/player touch targets.
+- Restored quick yard presets.

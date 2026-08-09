@@ -1,29 +1,31 @@
-SnapTrack v1.0.5
+SnapTrack v1.1.0
 
-Files Changed
+Runtime Files
 index.html
-app.js
 styles.css
+app.js
+firebase.js
+stats.js
+admin.js
 manifest.json
+icon-192.png
+icon-512.png
+
+Deployment / Reference Files
+firestore.rules
 README.txt
 BUILD.txt
 CHANGELOG.txt
 TEST.txt
 
-Files Not Changed
-firebase.js
-stats.js
-admin.js
-firestore.rules
-icon-192.png
-icon-512.png
+Removed From Release
+apple-touch-icon.png (unused 1254x1254 duplicate; the app uses icon-192.png)
 
 Firebase
-No rule changes required.
-
-Database
-No database changes required.
+No database migration is required. Existing games and presets remain compatible.
+No rule changes are included in this build.
 
 Notes
-- Touch handling for game/player preset cards moved to stable delegated touch/click events.
-- Quick yard presets restored in the stat modal.
+- Custom roster presets are stored alongside the six built-in presets.
+- Offensive plays now store touchdown and fumble as independent outcomes.
+- Multiple accessible live games are listed and can be resumed independently.

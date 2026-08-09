@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SnapTrack v1.0.5</title>
+  <title>SnapTrack v1.1.0</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="icon" href="./icon-192.png">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=1.0.7" />
+  <link rel="stylesheet" href="./styles.css?v=1.1.0" />
 </head>
 <body class="auth-lock">
   <section id="authScreen" class="auth-screen">
@@ -24,7 +24,7 @@
       <button id="googleBtn" class="btn light big">Continue with Google</button>
       <button id="forgotBtn" class="link-btn">Forgot password?</button>
     </div>
-    <div class="version">SnapTrack v1.0.5</div>
+    <div class="version">SnapTrack v1.1.0</div>
   </section>
 
   <div id="toast" class="toast hidden"></div>
@@ -86,7 +86,7 @@
 
     <section id="page-roster" class="page">
       <div class="card">
-        <div class="section-head"><div><div class="section-kicker">Roster + Groups</div><h2 id="rosterTitle">Roster</h2></div><div><button id="editRosterBtn" class="btn small">Edit Roster</button> <button id="renameGroupBtn" class="btn small">Rename / Color</button></div></div>
+        <div class="section-head"><div><div class="section-kicker">Roster + Presets</div><h2 id="rosterTitle">Roster</h2></div><div class="game-actions"><button id="addGroupBtn" class="btn small primary">Add Preset</button><button id="renameGroupBtn" class="btn small">Rename / Color</button><button id="editRosterBtn" class="btn small">Edit Roster</button></div></div>
         <div id="editGroups" class="chip-grid"></div>
         <div id="groupProgress" class="group-progress">Select a group.</div>
         <div id="rosterPlayers" class="player-list"></div>
@@ -110,7 +110,7 @@
       <div id="timelineList" class="timeline"></div>
     </section>
 
-    <footer class="footer">SnapTrack v1.0.5 · root-level build</footer>
+    <footer class="footer">SnapTrack v1.1.0</footer>
   </main>
 
   <div id="snapDock" class="snap-dock hidden">
@@ -124,8 +124,9 @@
     <div class="seg stat-type"><button data-ptype="run" class="on">Run</button><button data-ptype="pass">Pass</button><button data-ptype="special">Special</button></div>
     <div id="offStats">
       <label id="primaryLabel">Ball Carrier</label><div id="primaryGrid" class="mini-player-grid"></div>
-      <div id="receiverBlock" class="hidden"><label>Receiver</label><div id="receiverGrid" class="mini-player-grid"></div><label>Pass Result</label><div class="res-row"><button data-result="complete">Complete</button><button data-result="incomplete">Incomplete</button><button data-result="td">TD</button><button data-result="int">INT</button></div></div>
+      <div id="receiverBlock" class="hidden"><label>Receiver</label><div id="receiverGrid" class="mini-player-grid"></div><label>Pass Result</label><div class="res-row"><button data-result="complete">Complete</button><button data-result="incomplete">Incomplete</button><button data-result="int">INT</button></div></div>
       <label>Yards</label><div id="quickYards" class="quick-yards"><button data-yard="-5">-5</button><button data-yard="-3">-3</button><button data-yard="-1">-1</button><button data-yard="0">0</button><button data-yard="1">1</button><button data-yard="3">3</button><button data-yard="5">5</button><button data-yard="7">7</button><button data-yard="10">10</button><button data-yard="15">15+</button></div><div class="yard-row"><button id="ydMinus">−</button><input id="yardsInput" type="number" value="0"><button id="ydPlus">+</button></div>
+      <label>Ball Carrier Outcome</label><div class="res-row outcome-row"><button data-outcome="touchdown">Touchdown</button><button data-outcome="fumble">Fumble</button></div><p id="offOutcomeHint" class="subline">Track the ball carrier result.</p>
     </div>
     <div id="defStats" class="hidden">
       <label>Main Tackler</label><div id="tacklerGrid" class="mini-player-grid"></div>
@@ -138,8 +139,8 @@
   <div id="boxModal" class="modal-bg hidden"><div class="modal wide"><div class="modal-head"><div><h2 id="boxTitle">Boxscore</h2><p id="boxMeta"></p></div><button class="icon-btn" data-close="boxModal">×</button></div><div id="boxBody"></div></div></div>
   <div id="playerModal" class="modal-bg hidden"><div class="modal wide"><div class="modal-head"><div><h2 id="playerTitle">Player</h2><p id="playerMeta"></p></div><button class="icon-btn" data-close="playerModal">×</button></div><div id="playerBody"></div></div></div>
   <div id="adminModal" class="modal-bg hidden"><div class="modal wide"><div class="modal-head"><div><h2>People</h2><p>Tap a coach, then toggle access.</p></div><button class="icon-btn" data-close="adminModal">×</button></div><div class="row"><input id="manualUserEmail" placeholder="coach@email.com"><button id="addUserBtn" class="btn primary">Add</button></div><div id="adminPeople"></div></div></div>
-  <div id="groupModal" class="modal-bg hidden"><div class="modal"><div class="modal-head"><div><h2>Group</h2><p>Rename and color the selected group.</p></div><button class="icon-btn" data-close="groupModal">×</button></div><label>Name</label><input id="groupNameInput"><label>Color</label><div id="groupColors" class="color-row"></div><button id="saveGroupBtn" class="btn primary big">Save Group</button></div></div>
+  <div id="groupModal" class="modal-bg hidden"><div class="modal"><div class="modal-head"><div><h2 id="groupModalTitle">Edit Preset</h2><p id="groupModalSub">Rename and recolor the selected preset.</p></div><button class="icon-btn" data-close="groupModal">×</button></div><label>Name</label><input id="groupNameInput" maxlength="40"><label>Color</label><div id="groupColors" class="color-row"></div><button id="saveGroupBtn" class="btn primary big">Save Preset</button></div></div>
 
-  <script type="module" src="./app.js?v=1.0.7"></script>
+  <script type="module" src="./app.js?v=1.1.0"></script>
 </body>
 </html>

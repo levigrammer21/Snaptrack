@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, collection, doc, setDoc, addDoc, getDoc, getDocs, deleteDoc, query, orderBy, onSnapshot, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const cfg={apiKey:'AIzaSyAvfXlnSEyTmMmrxO91blwVt0jZeWWkyX0',authDomain:'snaptrak-44389.firebaseapp.com',projectId:'snaptrak-44389',storageBucket:'snaptrak-44389.firebasestorage.app',messagingSenderId:'8653895619',appId:'1:8653895619:web:d71b112539ea8b1dc6af76'};
 export const app=initializeApp(cfg);
