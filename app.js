@@ -3,7 +3,7 @@ import { gameStats, seasonStats, boxscoreHtml, gameCsv, seasonCsv, download } fr
 import { renderAdmin, addManualUser } from './admin.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const APP_VERSION='1.2.4';
+const APP_VERSION='1.3.0';
 const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let lastTouchAt=0;
 function bindTap(containerSelector, cardSelector, handler){
@@ -66,7 +66,7 @@ function sanitizeGroups(groups,team=state.team){
   return out;
 }
 function sanitizeFieldSelection(team=state.current?.team||state.team){state.selected=new Set(sanitizedPlayerIds([...state.selected],team)); return state.selected;}
-let state={user:null,access:null,accessCache:{},games:[],team:'1/2',page:'game',phase:'offense',current:null,selected:new Set(),groups:structuredClone(baseGroups),editGroup:'offense',dirty:false,lastCloudUpdate:null,unsubGame:null,stat:{}};
+let state={user:null,access:null,accessCache:{},games:[],team:'1/2',page:'game',phase:'offense',current:null,selected:new Set(),groups:structuredClone(baseGroups),editGroup:'offense',dirty:false,lastCloudUpdate:null,unsubGame:null,stat:{},editingPlayId:null,editingPlayIndex:null};
 let presetSaveTimer=null;
 function schedulePresetSave(){const team=state.team,groups=structuredClone(state.groups); clearTimeout(presetSaveTimer); setSaveStatus('saving'); presetSaveTimer=setTimeout(async()=>{try{await savePresets(team,{groups});setSaveStatus(state.dirty?'dirty':'saved');}catch(e){console.error(e);setSaveStatus('offline');}},300);}
 
@@ -131,10 +131,113 @@ $('#playerSearch').oninput=renderPlayers; $('#clearFieldBtn').onclick=()=>{state
 $('#endGameBtn').onclick=async()=>{if(!state.current)return; state.current.status='ended'; await cloudSave('end'); toast('Game ended'); renderAll();};
 $('#quickUndoBtn').onclick=undoSnap; $('#snapBtn').onclick=()=>{if(!fieldReady())return toast(fieldReadyMessage()); openStatModal();};
 function undoSnap(){if(!state.current?.plays?.length)return; state.current.plays.pop(); markDirty(); cloudSave('undo'); renderAll(); toast('Last snap undone');}
-function openStatModal(){state.stat={type:state.phase==='defense'?'defense':'run',yards:0,defYards:0,players:[...state.selected],phase:state.phase,result:'',touchdown:false,fumble:false,deadSnap:false,defResult:'',primary:null,receiver:null,tackler:null,assist:null}; $('#statTitle').textContent=`Play #${(state.current.plays||[]).length+1}`; $('#statSub').textContent=`${state.phase.toUpperCase()} · ${state.selected.size} players`; $('#statModal').classList.remove('hidden'); renderStatModal();}
-function renderStatModal(){const st=state.stat; $('#offStats').classList.toggle('hidden',state.phase==='defense'); $('#defStats').classList.toggle('hidden',state.phase!=='defense'); $$('.stat-type [data-ptype]').forEach(b=>b.classList.toggle('on',b.dataset.ptype===st.type)); $('#receiverBlock').classList.toggle('hidden',st.type!=='pass'); $('#yardsInput').value=st.yards||0; $$('#quickYards [data-yard]').forEach(b=>b.classList.toggle('on',Number(b.dataset.yard)===Number(st.yards||0))); $('#defYardsInput').value=st.defYards||0; $$('#defQuickYards [data-def-yard]').forEach(b=>b.classList.toggle('on',Number(b.dataset.defYard)===Number(st.defYards||0))); const players=roster(state.team).filter(p=>state.selected.has(p.id)); const mini=(target,field)=>{$(target).innerHTML=players.map(p=>`<button class="mini-player ${st[field]===p.id?'on':''}" data-pick="${field}" data-id="${p.id}">#${p.num}<br>${escapeHtml(p.name.split(' ')[0])}</button>`).join('')}; mini('#primaryGrid','primary'); mini('#receiverGrid','receiver'); mini('#tacklerGrid','tackler'); mini('#assistGrid','assist'); $('#primaryLabel').textContent=st.type==='pass'?'Passer':'Ball Carrier'; $$('#statModal [data-pick]').forEach(b=>b.onclick=()=>{if(b.dataset.pick==='assist'&&!st.tackler)return toast('Pick a main tackler first'); st[b.dataset.pick]=st[b.dataset.pick]===b.dataset.id?null:b.dataset.id; renderStatModal();}); $$('#statModal [data-result]').forEach(b=>b.classList.toggle('on',b.dataset.result===st.result)); const outcomeDisabled=st.type==='pass'&&st.result!=='complete'; $$('#statModal [data-outcome]').forEach(b=>{b.classList.toggle('on',!!st[b.dataset.outcome]);b.disabled=b.dataset.outcome==='deadSnap'?false:outcomeDisabled;}); $('#offOutcomeHint').textContent=st.type==='pass'?'Touchdown/fumble require Complete. Dead Snap can be tracked by itself.':'Track touchdown, fumble, or a dead snap.'; $$('#statModal [data-def]').forEach(b=>b.classList.toggle('on',b.dataset.def===st.defResult));}
-$$('.stat-type [data-ptype]').forEach(b=>b.onclick=()=>{state.stat.type=b.dataset.ptype; if(state.stat.type!=='pass')state.stat.result=''; renderStatModal();}); $('#ydMinus').onclick=()=>{state.stat.yards=(Number(state.stat.yards)||0)-1;renderStatModal()}; $('#ydPlus').onclick=()=>{state.stat.yards=(Number(state.stat.yards)||0)+1;renderStatModal()}; $('#yardsInput').oninput=e=>state.stat.yards=Number(e.target.value)||0; $$('#quickYards [data-yard]').forEach(b=>b.onclick=()=>{state.stat.yards=Number(b.dataset.yard)||0;renderStatModal();}); $('#defYdMinus').onclick=()=>{state.stat.defYards=(Number(state.stat.defYards)||0)-1;renderStatModal()}; $('#defYdPlus').onclick=()=>{state.stat.defYards=(Number(state.stat.defYards)||0)+1;renderStatModal()}; $('#defYardsInput').oninput=e=>state.stat.defYards=Number(e.target.value)||0; $$('#defQuickYards [data-def-yard]').forEach(b=>b.onclick=()=>{state.stat.defYards=Number(b.dataset.defYard)||0;renderStatModal();}); $$('#statModal [data-result]').forEach(b=>b.onclick=()=>{state.stat.result=b.dataset.result; if(state.stat.result!=='complete'){state.stat.touchdown=false;state.stat.fumble=false;} renderStatModal()}); $$('#statModal [data-outcome]').forEach(b=>b.onclick=()=>{if(b.disabled)return; const key=b.dataset.outcome; state.stat[key]=!state.stat[key]; if(key==='deadSnap'&&state.stat.deadSnap){state.stat.touchdown=false;state.stat.fumble=false;} else if((key==='touchdown'||key==='fumble')&&state.stat[key])state.stat.deadSnap=false; renderStatModal();}); $$('#statModal [data-def]').forEach(b=>b.onclick=()=>{state.stat.defResult=b.dataset.def;renderStatModal()}); $('#skipStatBtn').onclick=()=>savePlay(true); $('#savePlayBtn').onclick=()=>savePlay(false);
-async function savePlay(skip){const st=state.stat; if(!state.current)return; if(!fieldReady())return toast(fieldReadyMessage()); if(!skip&&state.phase==='defense'&&st.assist&&!st.tackler)return toast('Assist needs main tackler'); if(!skip&&state.phase!=='defense'&&(st.touchdown||st.fumble)){const actor=st.type==='pass'?st.receiver:st.primary; if(!actor)return toast(`Select the ${st.type==='pass'?'receiver':'ball carrier'} first`); if(st.type==='pass'&&st.result!=='complete')return toast('A receiver touchdown or fumble requires a completed pass');} const play={id:crypto.randomUUID(),num:(state.current.plays||[]).length+1,at:nowIso(),phase:state.phase,players:sanitizedPlayerIds([...state.selected],state.current.team),type:skip?'snap':st.type,yards:skip?0:Number(st.yards||0),defYards:skip?0:Number(st.defYards||0),result:st.result||'',touchdown:skip?false:!!st.touchdown,fumble:skip?false:!!st.fumble,deadSnap:skip?false:!!st.deadSnap,primary:st.primary,receiver:st.receiver,tackler:st.tackler,assist:st.assist,defResult:st.defResult||'',scorer:state.user.email}; state.current.plays=[...(state.current.plays||[]),play]; markDirty(); $('#statModal').classList.add('hidden'); await cloudSave('snap'); renderAll();}
+function openStatModal(){
+  state.editingPlayId=null;
+  state.editingPlayIndex=null;
+  state.stat={type:state.phase==='defense'?'defense':'run',yards:0,defYards:0,players:[...state.selected],phase:state.phase,result:'',touchdown:false,fumble:false,deadSnap:false,defResult:'',primary:null,receiver:null,tackler:null,assist:null};
+  $('#statModal').classList.remove('hidden');
+  renderStatModal();
+}
+function openEditPlay(playIndex){
+  if(!state.current)return;
+  const idx=Number(playIndex);
+  const pl=(state.current.plays||[])[idx];
+  if(!pl)return toast('Play not found');
+  state.editingPlayIndex=idx;
+  state.editingPlayId=pl.id||null;
+  state.stat={
+    type:pl.type||'snap',yards:Number(pl.yards||0),defYards:Number(pl.defYards??pl.yards??0),
+    players:sanitizedPlayerIds(pl.players||[],state.current.team),phase:pl.phase||'offense',result:pl.result||'',
+    touchdown:!!pl.touchdown,fumble:!!pl.fumble,deadSnap:!!pl.deadSnap,defResult:pl.defResult||'',
+    primary:pl.primary||null,receiver:pl.receiver||null,tackler:pl.tackler||null,assist:pl.assist||null
+  };
+  $('#statModal').classList.remove('hidden');
+  renderStatModal();
+}
+function editPlayers(){return new Set(sanitizedPlayerIds(state.stat.players||[],state.current?.team||state.team));}
+function renderStatModal(){
+  const st=state.stat;
+  const editing=Number.isInteger(state.editingPlayIndex);
+  const onField=editing?editPlayers():new Set([...state.selected]);
+  const req=requiredPlayers(state.current?.team||state.team);
+  $('#statTitle').textContent=editing?`Edit Play #${(state.current.plays||[])[state.editingPlayIndex]?.num||state.editingPlayIndex+1}`:`Play #${(state.current.plays||[]).length+1}`;
+  $('#statSub').textContent=`${String(st.phase||state.phase).toUpperCase()} · ${onField.size}/${req} players${editing?' · changes recalculate game + season stats':''}`;
+  $('#editPlayersBlock').classList.toggle('hidden',!editing);
+  if(editing){
+    $('#editPlayersGrid').innerHTML=roster(state.team).map(p=>`<button class="mini-player ${onField.has(p.id)?'on':''}" data-edit-field-player="${p.id}">#${p.num}<br>${escapeHtml(p.name.split(' ')[0])}</button>`).join('');
+    $$('#editPlayersGrid [data-edit-field-player]').forEach(b=>b.onclick=()=>{
+      const set=editPlayers(),id=b.dataset.editFieldPlayer;
+      set.has(id)?set.delete(id):set.add(id);
+      st.players=[...set];
+      ['primary','receiver','tackler','assist'].forEach(k=>{if(st[k]&&!set.has(st[k]))st[k]=null;});
+      renderStatModal();
+    });
+  }
+  const defense=st.phase==='defense';
+  $('#offStats').classList.toggle('hidden',defense);
+  $('#defStats').classList.toggle('hidden',!defense);
+  $('.stat-type').classList.toggle('hidden',defense);
+  $$('.stat-type [data-ptype]').forEach(b=>b.classList.toggle('on',b.dataset.ptype===st.type));
+  $('#receiverBlock').classList.toggle('hidden',st.type!=='pass');
+  $('#yardsInput').value=st.yards||0;
+  $$('#quickYards [data-yard]').forEach(b=>b.classList.toggle('on',Number(b.dataset.yard)===Number(st.yards||0)));
+  $('#defYardsInput').value=st.defYards||0;
+  $$('#defQuickYards [data-def-yard]').forEach(b=>b.classList.toggle('on',Number(b.dataset.defYard)===Number(st.defYards||0)));
+  const players=roster(state.team).filter(p=>onField.has(p.id));
+  const mini=(target,field)=>{$(target).innerHTML=players.map(p=>`<button class="mini-player ${st[field]===p.id?'on':''}" data-pick="${field}" data-id="${p.id}">#${p.num}<br>${escapeHtml(p.name.split(' ')[0])}</button>`).join('')};
+  mini('#primaryGrid','primary'); mini('#receiverGrid','receiver'); mini('#tacklerGrid','tackler'); mini('#assistGrid','assist');
+  $('#primaryLabel').textContent=st.type==='pass'?'Passer':'Ball Carrier';
+  $$('#statModal [data-pick]').forEach(b=>b.onclick=()=>{if(b.dataset.pick==='assist'&&!st.tackler)return toast('Pick a main tackler first'); st[b.dataset.pick]=st[b.dataset.pick]===b.dataset.id?null:b.dataset.id; renderStatModal();});
+  $$('#statModal [data-result]').forEach(b=>b.classList.toggle('on',b.dataset.result===st.result));
+  const outcomeDisabled=st.type==='pass'&&st.result!=='complete';
+  $$('#statModal [data-outcome]').forEach(b=>{b.classList.toggle('on',!!st[b.dataset.outcome]);b.disabled=b.dataset.outcome==='deadSnap'?false:outcomeDisabled;});
+  $('#offOutcomeHint').textContent=st.type==='pass'?'Touchdown/fumble require Complete. Dead Snap can be tracked by itself.':'Track touchdown, fumble, or a dead snap.';
+  $$('#statModal [data-def]').forEach(b=>b.classList.toggle('on',b.dataset.def===st.defResult));
+  $('#skipStatBtn').textContent=editing?'Make Snap Only':'Skip Stats';
+  $('#savePlayBtn').textContent=editing?'Save Changes':'Save Play';
+}
+$$('.stat-type [data-ptype]').forEach(b=>b.onclick=()=>{state.stat.type=b.dataset.ptype; if(state.stat.type!=='pass')state.stat.result=''; renderStatModal();});
+$('#ydMinus').onclick=()=>{state.stat.yards=(Number(state.stat.yards)||0)-1;renderStatModal()}; $('#ydPlus').onclick=()=>{state.stat.yards=(Number(state.stat.yards)||0)+1;renderStatModal()}; $('#yardsInput').oninput=e=>state.stat.yards=Number(e.target.value)||0; $$('#quickYards [data-yard]').forEach(b=>b.onclick=()=>{state.stat.yards=Number(b.dataset.yard)||0;renderStatModal();});
+$('#defYdMinus').onclick=()=>{state.stat.defYards=(Number(state.stat.defYards)||0)-1;renderStatModal()}; $('#defYdPlus').onclick=()=>{state.stat.defYards=(Number(state.stat.defYards)||0)+1;renderStatModal()}; $('#defYardsInput').oninput=e=>state.stat.defYards=Number(e.target.value)||0; $$('#defQuickYards [data-def-yard]').forEach(b=>b.onclick=()=>{state.stat.defYards=Number(b.dataset.defYard)||0;renderStatModal();});
+$$('#statModal [data-result]').forEach(b=>b.onclick=()=>{state.stat.result=b.dataset.result; if(state.stat.result!=='complete'){state.stat.touchdown=false;state.stat.fumble=false;} renderStatModal()});
+$$('#statModal [data-outcome]').forEach(b=>b.onclick=()=>{if(b.disabled)return; const key=b.dataset.outcome; state.stat[key]=!state.stat[key]; if(key==='deadSnap'&&state.stat.deadSnap){state.stat.touchdown=false;state.stat.fumble=false;} else if((key==='touchdown'||key==='fumble')&&state.stat[key])state.stat.deadSnap=false; renderStatModal();});
+$$('#statModal [data-def]').forEach(b=>b.onclick=()=>{state.stat.defResult=b.dataset.def;renderStatModal()});
+$('#skipStatBtn').onclick=()=>savePlay(true); $('#savePlayBtn').onclick=()=>savePlay(false);
+async function savePlay(skip){
+  const st=state.stat;
+  if(!state.current)return;
+  const editing=Number.isInteger(state.editingPlayIndex);
+  const players=sanitizedPlayerIds(editing?(st.players||[]):[...state.selected],state.current.team);
+  if(players.length!==requiredPlayers(state.current.team))return toast(`Need exactly ${requiredPlayers(state.current.team)} players on the play.`);
+  if(!skip&&st.phase==='defense'&&st.assist&&!st.tackler)return toast('Assist needs main tackler');
+  if(!skip&&st.phase!=='defense'&&(st.touchdown||st.fumble)){
+    const actor=st.type==='pass'?st.receiver:st.primary;
+    if(!actor)return toast(`Select the ${st.type==='pass'?'receiver':'ball carrier'} first`);
+    if(st.type==='pass'&&st.result!=='complete')return toast('A receiver touchdown or fumble requires a completed pass');
+  }
+  const old=editing?(state.current.plays||[])[state.editingPlayIndex]:null;
+  const play={
+    id:old?.id||crypto.randomUUID(),num:old?.num||((state.current.plays||[]).length+1),at:old?.at||nowIso(),phase:st.phase||state.phase,
+    players,type:skip?'snap':st.type,yards:skip?0:Number(st.yards||0),defYards:skip?0:Number(st.defYards||0),result:skip?'':(st.result||''),
+    touchdown:skip?false:!!st.touchdown,fumble:skip?false:!!st.fumble,deadSnap:skip?false:!!st.deadSnap,
+    primary:skip?null:st.primary,receiver:skip?null:st.receiver,tackler:skip?null:st.tackler,assist:skip?null:st.assist,defResult:skip?'':(st.defResult||''),
+    scorer:old?.scorer||state.user.email
+  };
+  if(editing){play.editedAt=nowIso();play.editedBy=state.user.email;}
+  if(editing){
+    const idx=state.editingPlayIndex;
+    if(idx<0||idx>=(state.current.plays||[]).length)return toast('Play not found');
+    state.current.plays=[...state.current.plays];
+    state.current.plays[idx]=play;
+  }else state.current.plays=[...(state.current.plays||[]),play];
+  state.editingPlayId=null;
+  state.editingPlayIndex=null;
+  markDirty();
+  $('#statModal').classList.add('hidden');
+  await cloudSave(editing?'edit play':'snap');
+  renderAll();
+  toast(editing?'Play updated':'Play saved');
+}
 
 function renderRoster(){if(!state.groups[state.editGroup])state.editGroup=Object.keys(state.groups)[0]; renderGroups('#editGroups',true); const g=state.groups[state.editGroup]; const req=requiredPlayers(state.team); $('#groupProgress').textContent=g?`${g.name}: ${g.players.length}/${req} selected`:''; $('#rosterPlayers').innerHTML=roster(state.team).map(p=>playerHtml(p,g?.players.includes(p.id),snapCount(p.id))).join('');}
 let groupEditorMode='edit';
@@ -202,10 +305,11 @@ function bindSortableTable(root){
 function bindBoxscoreSort(){bindSortableTable($('#boxBody'));}
 function openBoxHandler(b){b.onclick=()=>{const g=state.games.find(x=>x.id===b.dataset.box); $('#boxTitle').textContent=`${g.team} ${g.name||'Boxscore'}`; $('#boxMeta').textContent=`${(g.plays||[]).length} plays · ${new Date(g.date||Date.now()).toLocaleDateString()}`; $('#boxBody').innerHTML=boxscoreHtml(g,roster(g.team)); bindBoxscoreSort(); $('#boxModal').classList.remove('hidden');};}
 $('#refreshGamesBtn').onclick=()=>renderGames(); $('#exportGameBtn').onclick=()=>state.current&&download(`${state.current.team}_${state.current.name||'game'}_timeline.csv`,gameCsv(state.current,roster(state.current.team)));
-function renderTimeline(){const plays=state.current?.plays||[]; $('#timelineList').innerHTML=plays.length?plays.slice().reverse().map(pl=>{const names=(pl.players||[]).map(id=>roster(state.current.team).find(p=>p.id===id)).filter(Boolean).map(p=>`#${p.num}`).join(' '); const stat=pl.phase==='defense'?defDesc(pl):offDesc(pl); return `<div class="timeline-item"><div class="timeline-num">${pl.num}</div><div class="timeline-body"><div class="timeline-title">${pl.phase.toUpperCase()} · ${stat}</div><div class="timeline-meta">${names} · scored by ${pl.scorer||''}</div></div></div>`}).join(''):'<div class="card">No timeline yet.</div>';}
+function renderTimeline(){const plays=state.current?.plays||[]; $('#timelineList').innerHTML=plays.length?plays.map((pl,index)=>({pl,index})).reverse().map(({pl,index})=>{const names=(pl.players||[]).map(id=>roster(state.current.team).find(p=>p.id===id)).filter(Boolean).map(p=>`#${p.num}`).join(' '); const stat=pl.phase==='defense'?defDesc(pl):offDesc(pl); const edited=pl.editedAt?' · edited':''; return `<div class="timeline-item editable" data-edit-play-index="${index}" role="button" tabindex="0"><div class="timeline-num">${pl.num||index+1}</div><div class="timeline-body"><div class="timeline-title">${pl.phase.toUpperCase()} · ${stat}</div><div class="timeline-meta">${names} · scored by ${escapeHtml(pl.scorer||'')}${edited}</div><div class="timeline-edit-hint">Tap to edit play</div></div></div>`}).join(''):'<div class="card">No timeline yet.</div>';}
 function offDesc(pl){if(pl.type==='snap')return 'Snap only'; if(pl.deadSnap)return 'Dead Snap'; const r=roster(state.current.team); const p=id=>r.find(x=>x.id===id); const outcomes=[(pl.touchdown||pl.result==='td')?'TD':'',pl.fumble?'FUMBLE':'',pl.deadSnap?'DEAD SNAP':''].filter(Boolean).join(' · '); if(pl.type==='pass')return `Pass ${p(pl.primary)?.name||''} → ${p(pl.receiver)?.name||''} ${pl.yards||0} yds ${pl.result||''} ${outcomes}`.trim(); return `${pl.type} ${p(pl.primary)?.name||''} ${pl.yards||0} yds ${outcomes}`.trim();}
 function defDesc(pl){const r=roster(state.current.team); const p=id=>r.find(x=>x.id===id)?.name||''; const y=Number(pl.defYards??pl.yards??0); return `${pl.defResult||'Defense'} ${p(pl.tackler)}${pl.assist?' / '+p(pl.assist):''} · ${y} opp yds`;}
 
+bindTap('#timelineList','.timeline-item[data-edit-play-index]',card=>openEditPlay(card.dataset.editPlayIndex));
 bindTap('#gamePlayers','.player-card',card=>{const id=card.dataset.id; state.selected.has(id)?state.selected.delete(id):state.selected.add(id); renderGame();});
 bindTap('#rosterPlayers','.player-card',card=>{const arr=state.groups[state.editGroup].players; const id=card.dataset.id; const i=arr.indexOf(id); i>=0?arr.splice(i,1):arr.push(id); renderRoster(); renderGame(); schedulePresetSave();});
 

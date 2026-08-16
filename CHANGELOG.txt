@@ -1,3 +1,12 @@
+v1.3.0
+- Timeline plays are now tappable in live and completed games.
+- Edit the players on field for an existing play.
+- Edit run/pass/special results, yards, TD/fumble/dead snap, tackler/assist, defensive result, and opponent yards.
+- Saving replaces the original play in place; it does not add a duplicate play.
+- Game and season statistics continue to derive from the play timeline, so historical edits recalculate automatically.
+- Edited plays are marked in the timeline.
+- Existing game status, play number, original timestamp, and original scorer are preserved.
+
 v1.2.4
 - Season Leaders: added sortable Rushes and Receptions columns while keeping rushing and receiving yards.
 

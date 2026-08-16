@@ -1,21 +1,24 @@
-SnapTrack v1.2.3 Test Checklist
+SnapTrack v1.3.0 Test Checklist
 
-Automated checks completed before packaging:
-[x] JavaScript syntax validation
-[x] Manifest JSON validation
-[x] Internal file-reference validation
-[x] Legacy and new touchdown stat aggregation
-[x] Runner and receiver fumble attribution
-[x] Separate 1/2 and 3/4 game aggregation without cross-team leakage
-[x] Custom preset schema survives sanitizing logic
+Historical game edit
+[ ] Games > Open a completed game > Timeline.
+[ ] Tap a play. Edit Play modal opens.
+[ ] Change one player on field; player count must equal the team requirement to save.
+[ ] Save Changes. Timeline still has the same number of plays and the same play number.
+[ ] Re-open the play and confirm the corrected players are saved.
+[ ] Check Boxscore and Season stats; snap/stat totals reflect the corrected play.
 
-Recommended signed-in smoke test after deployment:
-[ ] Browser tab, sign-in screen, footer, and installed-app name say v1.2.3
-[ ] Open Roster and select each built-in preset
-[ ] Add Preset, name/color it, add players, reload, and confirm it remains
-[ ] Start or resume a 1/2 game and a 3/4 game from two devices/tabs
-[ ] Record a run touchdown and run fumble
-[ ] Record a completed-pass receiver touchdown and receiver fumble
-[ ] Confirm TD/FUM in Timeline, Boxscore, player profile, and CSV
-[ ] Confirm quick yards, +/- yards, Undo, Save Now, and End still work
-[ ] Confirm both live games remain listed and each keeps only its own plays
+Result edit
+[ ] Tap an offensive play and change run/pass/special details, yards, TD/FUM/DS as appropriate.
+[ ] Tap a defensive play and change tackler, assist, result, and opponent yards.
+[ ] Save and confirm the timeline description and boxscore update.
+[ ] Use Make Snap Only on a play and confirm individual result stats are removed while participation remains.
+
+Live game edit
+[ ] Record several test plays. Open Timeline while game is live.
+[ ] Edit an earlier play, save, then continue recording new snaps normally.
+[ ] Confirm Undo still removes only the latest play.
+
+Persistence
+[ ] Refresh/reopen the app after an edit and confirm the edited play remains.
+[ ] Completed game stays completed after an edit.

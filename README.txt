@@ -1,4 +1,4 @@
-SnapTrack v1.2.3
+SnapTrack v1.3.0
 
 Upload these runtime files to the ROOT of your GitHub Pages directory:
 index.html
@@ -21,7 +21,7 @@ CHANGELOG.txt
 TEST.txt
 
 Features:
-- live game scoring and play timeline
+- live game scoring and tappable/editable play timeline
 - expandable roster presets
 - runner and receiver touchdown/fumble tracking
 - multiple simultaneous live games across teams

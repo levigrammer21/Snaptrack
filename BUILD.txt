@@ -1,31 +1,3 @@
-SnapTrack v1.2.3
+SnapTrack v1.3.0
 
-Runtime Files
-index.html
-styles.css
-app.js
-firebase.js
-stats.js
-admin.js
-manifest.json
-icon-192.png
-icon-512.png
-
-Deployment / Reference Files
-firestore.rules
-README.txt
-BUILD.txt
-CHANGELOG.txt
-TEST.txt
-
-Removed From Release
-apple-touch-icon.png (unused 1254x1254 duplicate; the app uses icon-192.png)
-
-Firebase
-No database migration is required. Existing games and presets remain compatible.
-No rule changes are included in this build.
-
-Notes
-- Custom roster presets are stored alongside the six built-in presets.
-- Offensive plays store touchdown, fumble, and dead snap outcomes. Defensive plays can store opponent yards as a team-only stat without assigning those yards to any defender.
-- Multiple accessible live games are listed and can be resumed independently.
+Surgical timeline play editing build. Existing play history remains the source of truth; edits replace only the selected play and game/season stats are derived again from the updated timeline.
