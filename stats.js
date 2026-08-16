@@ -3,7 +3,7 @@ export function emptyLine(p){
     id:p.id,num:p.num,name:p.name,snaps:0,off:0,def:0,st:0,
     rushAtt:0,rushYds:0,rushTd:0,rec:0,recYds:0,recTd:0,
     passAtt:0,passCmp:0,passYds:0,passTd:0,intsThrown:0,
-    fumbles:0,stTd:0,tackles:0,assists:0,sacks:0,ints:0,ff:0,fr:0,
+    fumbles:0,deadSnaps:0,stTd:0,tackles:0,assists:0,sacks:0,ints:0,ff:0,fr:0,
     tdAllowed:0,longRush:0,longRec:0,games:0
   };
 }
@@ -11,7 +11,7 @@ export function emptyLine(p){
 export function gameStats(game, roster=[]){
   const map={};
   roster.forEach(p=>map[p.id]=emptyLine(p));
-  const team={snaps:0,off:0,def:0,st:0,rushAtt:0,rushYds:0,passAtt:0,passCmp:0,passYds:0,rec:0,recYds:0,tackles:0,assists:0,sacks:0,ints:0,fr:0,fumbles:0,td:0};
+  const team={snaps:0,off:0,def:0,st:0,rushAtt:0,rushYds:0,passAtt:0,passCmp:0,passYds:0,rec:0,recYds:0,tackles:0,assists:0,sacks:0,ints:0,fr:0,fumbles:0,deadSnaps:0,defYds:0,td:0};
 
   (game.plays||[]).forEach(pl=>{
     team.snaps++;
@@ -30,7 +30,7 @@ export function gameStats(game, roster=[]){
     const y=Number(pl.yards||0);
     const touchdown=!!pl.touchdown||pl.result==='td';
 
-    if(pl.type==='run'&&pl.primary){
+    if(!pl.deadSnap&&pl.type==='run'&&pl.primary){
       const runner=map[pl.primary];
       if(runner){
         runner.rushAtt++;
@@ -42,7 +42,7 @@ export function gameStats(game, roster=[]){
       team.rushYds+=y;
     }
 
-    if(pl.type==='pass'){
+    if(!pl.deadSnap&&pl.type==='pass'){
       team.passAtt++;
       const passer=map[pl.primary];
       if(passer)passer.passAtt++;
@@ -73,6 +73,17 @@ export function gameStats(game, roster=[]){
       team.fumbles++;
     }
 
+    if(pl.deadSnap){
+      const deadSnapPlayer=pl.primary&&map[pl.primary];
+      if(deadSnapPlayer)deadSnapPlayer.deadSnaps++;
+      team.deadSnaps++;
+    }
+
+    if(pl.phase==='defense'){
+      const dy=Number(pl.defYards??pl.yards??0);
+      team.defYds+=dy;
+    }
+
     if(pl.tackler&&map[pl.tackler]){map[pl.tackler].tackles++;team.tackles++;}
     if(pl.assist&&map[pl.assist]){map[pl.assist].assists++;team.assists++;}
     if(pl.defResult==='sack'&&pl.tackler&&map[pl.tackler]){map[pl.tackler].sacks++;team.sacks++;}
@@ -87,7 +98,7 @@ export function gameStats(game, roster=[]){
 export function seasonStats(games, roster=[]){
   const base={};
   roster.forEach(p=>base[p.id]=emptyLine(p));
-  const team={games:0,snaps:0,off:0,def:0,st:0,rushAtt:0,rushYds:0,passAtt:0,passCmp:0,passYds:0,rec:0,recYds:0,tackles:0,assists:0,sacks:0,ints:0,fr:0,fumbles:0,td:0};
+  const team={games:0,snaps:0,off:0,def:0,st:0,rushAtt:0,rushYds:0,passAtt:0,passCmp:0,passYds:0,rec:0,recYds:0,tackles:0,assists:0,sacks:0,ints:0,fr:0,fumbles:0,deadSnaps:0,defYds:0,td:0};
   const gameLogs={};
 
   games.filter(g=>g.status==='ended').forEach(g=>{
@@ -121,14 +132,14 @@ export function download(name,text){
 export function boxscoreHtml(game, roster){
   const s=gameStats(game,roster);
   const rows=(arr,cols)=>`<table class="table sortable-table"><thead><tr>${cols.map((c,i)=>`<th class="stat-sort" data-sort-col="${i}" data-sort-dir="" role="button" tabindex="0">${c[0]}</th>`).join('')}</tr></thead><tbody>${arr.map(p=>`<tr>${cols.map(c=>`<td data-sort-value="${c[2](p)}">${c[1](p)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  const off=s.players.filter(p=>p.off||p.rushAtt||p.rec||p.passAtt||p.fumbles||p.stTd);
+  const off=s.players.filter(p=>p.off||p.rushAtt||p.rec||p.passAtt||p.fumbles||p.deadSnaps||p.stTd);
   const def=s.players.filter(p=>p.def||p.tackles||p.assists||p.sacks||p.ints||p.fr);
   const part=s.players.filter(p=>p.snaps);
-  return `<div class="score-grid"><div class="metric blue"><b>${s.team.snaps}</b><span>Total Snaps</span></div><div class="metric green"><b>${s.team.rushYds+s.team.passYds}</b><span>Off Yards</span></div><div class="metric amber"><b>${s.team.tackles+s.team.assists}</b><span>Tackles</span></div></div><h3>Offense</h3>${rows(off,[['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],['Off',p=>p.off,p=>p.off],['Rush',p=>`${p.rushAtt}-${p.rushYds}`,p=>p.rushYds],['Long',p=>p.longRush,p=>p.longRush],['Rec',p=>`${p.rec}-${p.recYds}`,p=>p.recYds],['TD',p=>p.rushTd+p.recTd+p.stTd,p=>p.rushTd+p.recTd+p.stTd],['FUM',p=>p.fumbles,p=>p.fumbles]])}<h3>Defense</h3>${rows(def,[['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],['Def',p=>p.def,p=>p.def],['Tkl',p=>p.tackles,p=>p.tackles],['Ast',p=>p.assists,p=>p.assists],['Sack',p=>p.sacks,p=>p.sacks],['INT',p=>p.ints,p=>p.ints],['FR',p=>p.fr,p=>p.fr]])}<h3>Participation</h3>${rows(part,[['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],['Snaps',p=>p.snaps,p=>p.snaps],['Off',p=>p.off,p=>p.off],['Def',p=>p.def,p=>p.def],['ST',p=>p.st,p=>p.st],['%',p=>s.team.snaps?Math.round(p.snaps/s.team.snaps*100)+'%':'0%',p=>s.team.snaps?Math.round(p.snaps/s.team.snaps*100):0]])}`;
+  return `<div class="score-grid"><div class="metric blue"><b>${s.team.snaps}</b><span>Total Snaps</span></div><div class="metric green"><b>${s.team.rushYds+s.team.passYds}</b><span>Off Yards</span></div><div class="metric amber"><b>${s.team.defYds}</b><span>Opp Yards</span></div></div><h3>Offense</h3>${rows(off,[['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],['Off',p=>p.off,p=>p.off],['Rush',p=>`${p.rushAtt}-${p.rushYds}`,p=>p.rushYds],['Long',p=>p.longRush,p=>p.longRush],['Rec',p=>`${p.rec}-${p.recYds}`,p=>p.recYds],['TD',p=>p.rushTd+p.recTd+p.stTd,p=>p.rushTd+p.recTd+p.stTd],['FUM',p=>p.fumbles,p=>p.fumbles],['DS',p=>p.deadSnaps,p=>p.deadSnaps]])}<h3>Defense</h3>${rows(def,[['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],['Def',p=>p.def,p=>p.def],['Tkl',p=>p.tackles,p=>p.tackles],['Ast',p=>p.assists,p=>p.assists],['Sack',p=>p.sacks,p=>p.sacks],['INT',p=>p.ints,p=>p.ints],['FR',p=>p.fr,p=>p.fr]])}<h3>Participation</h3>${rows(part,[['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],['Snaps',p=>p.snaps,p=>p.snaps],['Off',p=>p.off,p=>p.off],['Def',p=>p.def,p=>p.def],['ST',p=>p.st,p=>p.st],['%',p=>s.team.snaps?Math.round(p.snaps/s.team.snaps*100)+'%':'0%',p=>s.team.snaps?Math.round(p.snaps/s.team.snaps*100):0]])}`;
 }
 
-const exportHeader=['Player','Snaps','Off','Def','ST','RushAtt','RushYds','RushTD','Rec','RecYds','RecTD','PassTD','STTD','Fumbles','Tackles','Assists','Sacks','INT','FR'];
-const exportLine=p=>[`${p.num} ${p.name}`,p.snaps,p.off,p.def,p.st,p.rushAtt,p.rushYds,p.rushTd,p.rec,p.recYds,p.recTd,p.passTd,p.stTd,p.fumbles,p.tackles,p.assists,p.sacks,p.ints,p.fr];
+const exportHeader=['Player','Snaps','Off','Def','ST','RushAtt','RushYds','RushTD','Rec','RecYds','RecTD','PassTD','STTD','Fumbles','DeadSnaps','Tackles','Assists','Sacks','INT','FR'];
+const exportLine=p=>[`${p.num} ${p.name}`,p.snaps,p.off,p.def,p.st,p.rushAtt,p.rushYds,p.rushTd,p.rec,p.recYds,p.recTd,p.passTd,p.stTd,p.fumbles,p.deadSnaps,p.tackles,p.assists,p.sacks,p.ints,p.fr];
 
 export function gameCsv(game,roster){
   const s=gameStats(game,roster);

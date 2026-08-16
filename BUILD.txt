@@ -1,4 +1,4 @@
-SnapTrack v1.1.1
+SnapTrack v1.2.1
 
 Runtime Files
 index.html
@@ -27,5 +27,5 @@ No rule changes are included in this build.
 
 Notes
 - Custom roster presets are stored alongside the six built-in presets.
-- Offensive plays now store touchdown and fumble as independent outcomes.
+- Offensive plays store touchdown, fumble, and dead snap outcomes. Defensive plays can store opponent yards as a team-only stat without assigning those yards to any defender.
 - Multiple accessible live games are listed and can be resumed independently.
