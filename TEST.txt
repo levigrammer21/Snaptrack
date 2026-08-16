@@ -1,4 +1,4 @@
-SnapTrack v1.2.2 Test Checklist
+SnapTrack v1.2.3 Test Checklist
 
 Automated checks completed before packaging:
 [x] JavaScript syntax validation
@@ -10,7 +10,7 @@ Automated checks completed before packaging:
 [x] Custom preset schema survives sanitizing logic
 
 Recommended signed-in smoke test after deployment:
-[ ] Browser tab, sign-in screen, footer, and installed-app name say v1.2.2
+[ ] Browser tab, sign-in screen, footer, and installed-app name say v1.2.3
 [ ] Open Roster and select each built-in preset
 [ ] Add Preset, name/color it, add players, reload, and confirm it remains
 [ ] Start or resume a 1/2 game and a 3/4 game from two devices/tabs

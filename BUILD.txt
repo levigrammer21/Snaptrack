@@ -1,4 +1,4 @@
-SnapTrack v1.2.2
+SnapTrack v1.2.3
 
 Runtime Files
 index.html
