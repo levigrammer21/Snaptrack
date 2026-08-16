@@ -1,4 +1,4 @@
-SnapTrack v1.1.0
+SnapTrack v1.1.1
 
 Added
 - Add Preset creates additional reusable roster/on-field presets beyond the six defaults.

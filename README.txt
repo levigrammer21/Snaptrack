@@ -1,4 +1,4 @@
-SnapTrack v1.1.0
+SnapTrack v1.1.1
 
 Upload these runtime files to the ROOT of your GitHub Pages directory:
 index.html
