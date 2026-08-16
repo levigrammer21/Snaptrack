@@ -3,7 +3,7 @@ import { gameStats, seasonStats, boxscoreHtml, gameCsv, seasonCsv, download } fr
 import { renderAdmin, addManualUser } from './admin.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const APP_VERSION='1.2.1';
+const APP_VERSION='1.2.2';
 const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let lastTouchAt=0;
 function bindTap(containerSelector, cardSelector, handler){
@@ -154,12 +154,13 @@ function renderSeason(){
     ['Rec',p=>p.recYds,p=>p.recYds],
     ['TD',p=>p.rushTd+p.recTd+p.stTd,p=>p.rushTd+p.recTd+p.stTd],
     ['FUM',p=>p.fumbles,p=>p.fumbles],
-    ['DS',p=>p.deadSnaps,p=>p.deadSnaps],
     ['Tkl',p=>p.tackles,p=>p.tackles],
+    ['Ast',p=>p.assists,p=>p.assists],
+    ['Total',p=>p.tackles+p.assists,p=>p.tackles+p.assists],
     ['Sack',p=>p.sacks,p=>p.sacks],
     ['INT',p=>p.ints,p=>p.ints]
   ];
-  const active=ss.players.filter(p=>p.snaps||p.rushYds||p.recYds||p.tackles||p.sacks||p.ints||p.deadSnaps);
+  const active=ss.players.filter(p=>p.snaps||p.rushYds||p.recYds||p.tackles||p.assists||p.sacks||p.ints);
   $('#leaderboards').innerHTML=`<div class="leader-head"><div><div class="section-kicker">Leaderboards</div><h2>Season Leaders</h2></div><span class="leader-hint">Tap any stat to sort ↕</span></div><div class="leader-table-wrap"><table class="table leaderboard-table sortable-table"><thead><tr>${cols.map((c,i)=>`<th class="stat-sort" data-sort-col="${i}" data-sort-dir="" role="button" tabindex="0">${c[0]}</th>`).join('')}</tr></thead><tbody>${active.map(p=>`<tr>${cols.map(c=>`<td data-sort-value="${c[2](p)}">${c[1](p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${active.length?'':'<p class="subline">No stats yet.</p>'}`;
   bindSortableTable($('#leaderboards'));
   $('#playerDirectory').innerHTML=`<div class="section-kicker">Player Profiles</div><div class="player-list">${ss.players.map(p=>`<div class="player-card" data-profile="${p.id}"><div class="pnum">${p.num}</div><div class="pinfo"><div class="pname">${p.name}</div><div class="psub">${p.games} games · ${p.snaps} snaps · ${p.tackles} tackles</div></div><div class="pstat">›</div></div>`).join('')}</div>`;

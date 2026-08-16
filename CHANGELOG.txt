@@ -1,4 +1,32 @@
-SnapTrack v1.1.1
+SnapTrack v1.2.2
+- Season Leaders: removed Dead Snap (DS); dead snaps remain available inside individual game stats.
+- Added sortable Assists (Ast) and Total Tackles (Total = tackles + assists).
+
+SnapTrack v1.2.2
+
+Changed
+- Opponent yards on defense are now a team-only stat. They are never credited or charged to the tackler or any other defender.
+- Removed individual defensive-yard columns from season leaders, box scores, player profiles, and player CSV rows.
+- Tackles, assists, sacks, interceptions, and fumble recoveries continue to belong to individual defenders normally.
+
+Compatibility
+- Existing games remain compatible. Previously saved opponent-yard values are still totaled for the team, but are no longer attributed to players.
+- No database migration is required.
+
+Previous v1.2.0
+
+Added
+- Season leaderboard is now a clean sortable stats table; tap any header to sort ascending/descending.
+- Dead Snap outcome on offense, with DS shown in box scores, season leaders, profiles, and CSV exports.
+- Opponent yards entry on defensive plays without selecting an opponent player.
+- Defensive yards are totaled for the team and credited to the main tackler, including negative plays such as -2 yards.
+- Defense box score now includes a sortable Yds column and the game summary shows Opp Yards.
+
+Compatibility
+- Existing games remain compatible; missing Dead Snap and defensive-yard fields read as zero.
+- No database migration is required.
+
+Previous v1.1.1
 
 Added
 - Add Preset creates additional reusable roster/on-field presets beyond the six defaults.
