@@ -71,3 +71,8 @@ Previous v1.0.7
 Previous v1.0.5
 - Stabilized roster/player touch targets.
 - Restored quick yard presets.
+
+v1.3.1
+- Prevented the release/click that opens Edit Play from accidentally toggling a player in the newly opened editor.
+- Added Scrimmage marking at game setup and in the Games archive.
+- Scrimmages remain fully tracked in game/boxscore/timeline but are excluded from all season totals, leaderboards, player season logs, and season CSV exports.

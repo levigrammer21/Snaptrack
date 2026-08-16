@@ -101,7 +101,7 @@ export function seasonStats(games, roster=[]){
   const team={games:0,snaps:0,off:0,def:0,st:0,rushAtt:0,rushYds:0,passAtt:0,passCmp:0,passYds:0,rec:0,recYds:0,tackles:0,assists:0,sacks:0,ints:0,fr:0,fumbles:0,deadSnaps:0,defYds:0,td:0};
   const gameLogs={};
 
-  games.filter(g=>g.status==='ended').forEach(g=>{
+  games.filter(g=>g.status==='ended'&&!g.scrimmage).forEach(g=>{
     team.games++;
     const gs=gameStats(g,roster);
     Object.keys(team).forEach(k=>{if(k!=='games')team[k]+=gs.team[k]||0;});

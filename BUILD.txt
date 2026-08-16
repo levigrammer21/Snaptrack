@@ -1,3 +1,1 @@
-SnapTrack v1.3.0
-
-Surgical timeline play editing build. Existing play history remains the source of truth; edits replace only the selected play and game/season stats are derived again from the updated timeline.
+SnapTrack v1.3.1

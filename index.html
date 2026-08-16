@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SnapTrack v1.3.0</title>
+  <title>SnapTrack v1.3.1</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="icon" href="./icon-192.png">
@@ -24,7 +24,7 @@
       <button id="googleBtn" class="btn light big">Continue with Google</button>
       <button id="forgotBtn" class="link-btn">Forgot password?</button>
     </div>
-    <div class="version">SnapTrack v1.3.0</div>
+    <div class="version">SnapTrack v1.3.1</div>
   </section>
 
   <div id="toast" class="toast hidden"></div>
@@ -59,6 +59,7 @@
         <div class="section-kicker">Game Setup</div>
         <div class="team-select" id="teamCards"></div>
         <label>Opponent / Game</label><input id="gameName" placeholder="vs Eagles">
+        <label class="scrimmage-check"><input id="scrimmageGame" type="checkbox"> <span><b>Scrimmage</b><small>Does not count toward season stats</small></span></label>
         <div class="row"><button id="startGameBtn" class="btn primary big">Start Live Game</button><button id="practiceBtn" class="btn big">Practice Mode</button></div>
       </div>
 
@@ -110,7 +111,7 @@
       <div id="timelineList" class="timeline"></div>
     </section>
 
-    <footer class="footer">SnapTrack v1.3.0</footer>
+    <footer class="footer">SnapTrack v1.3.1</footer>
   </main>
 
   <div id="snapDock" class="snap-dock hidden">
@@ -143,6 +144,6 @@
   <div id="adminModal" class="modal-bg hidden"><div class="modal wide"><div class="modal-head"><div><h2>People</h2><p>Tap a coach, then toggle access.</p></div><button class="icon-btn" data-close="adminModal">×</button></div><div class="row"><input id="manualUserEmail" placeholder="coach@email.com"><button id="addUserBtn" class="btn primary">Add</button></div><div id="adminPeople"></div></div></div>
   <div id="groupModal" class="modal-bg hidden"><div class="modal"><div class="modal-head"><div><h2 id="groupModalTitle">Edit Preset</h2><p id="groupModalSub">Rename and recolor the selected preset.</p></div><button class="icon-btn" data-close="groupModal">×</button></div><label>Name</label><input id="groupNameInput" maxlength="40"><label>Color</label><div id="groupColors" class="color-row"></div><button id="saveGroupBtn" class="btn primary big">Save Preset</button></div></div>
 
-  <script type="module" src="./app.js?v=1.3.0"></script>
+  <script type="module" src="./app.js?v=1.3.1"></script>
 </body>
 </html>

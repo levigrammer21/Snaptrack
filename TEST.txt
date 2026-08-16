@@ -22,3 +22,9 @@ Live game edit
 Persistence
 [ ] Refresh/reopen the app after an edit and confirm the edited play remains.
 [ ] Completed game stays completed after an edit.
+
+v1.3.1 checks
+1. Timeline edit ghost tap: repeatedly tap different areas of a play card to open Edit Play. Confirm no player is added/removed until a deliberate second tap inside the modal.
+2. New scrimmage: check Scrimmage before Start Live Game, score/end it, confirm game and boxscore retain stats while Season totals/leaders do not change.
+3. Historical scrimmage: Games > Mark Scrimmage on a completed game. Confirm Season totals immediately drop that game's stats. Tap Count in Season to restore them.
+4. Scrimmage editing: edit a play in a scrimmage and confirm its game boxscore changes but Season remains unaffected.

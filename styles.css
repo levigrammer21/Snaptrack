@@ -37,3 +37,6 @@
 
 /* v1.3.0 timeline play editing */
 .timeline-item.editable{cursor:pointer;touch-action:manipulation}.timeline-item.editable .timeline-body{transition:border-color .15s ease,background .15s ease}.timeline-item.editable:active .timeline-body{border-color:var(--blue);background:var(--surf2)}.timeline-edit-hint{margin-top:7px;color:var(--blue);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}.edit-field-grid{max-height:230px;overflow:auto;padding:2px}.edit-field-grid .mini-player.on{background:rgba(22,163,74,.13);border-color:var(--green);color:var(--green)}
+
+/* v1.3.1: scrimmage marker */
+.scrimmage-check{display:flex;align-items:center;gap:10px;margin:12px 0;cursor:pointer}.scrimmage-check input{width:20px;height:20px;flex:0 0 auto}.scrimmage-check span{display:flex;flex-direction:column;gap:2px}.scrimmage-check small{opacity:.7;font-weight:500}.btn.amber{border-color:#d97706}
