@@ -3,7 +3,7 @@ import { gameStats, seasonStats, boxscoreHtml, gameCsv, seasonCsv, download } fr
 import { renderAdmin, addManualUser } from './admin.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const APP_VERSION='1.2.3';
+const APP_VERSION='1.2.4';
 const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let lastTouchAt=0;
 function bindTap(containerSelector, cardSelector, handler){
@@ -149,8 +149,10 @@ function renderSeason(){
   $('#seasonOverview').innerHTML=`<div class="metric blue"><b>${ss.team.games}</b><span>Games</span></div><div class="metric green"><b>${ss.team.snaps}</b><span>Snaps</span></div><div class="metric amber"><b>${ss.team.rushYds+ss.team.passYds}</b><span>Off Yards</span></div>`;
   const cols=[
     ['Player',p=>`#${p.num} ${p.name}`,p=>Number(p.num)||0],
-    ['Rush',p=>p.rushYds,p=>p.rushYds],
-    ['Rec',p=>p.recYds,p=>p.recYds],
+    ['Rushes',p=>p.rushAtt,p=>p.rushAtt],
+    ['Rush Yds',p=>p.rushYds,p=>p.rushYds],
+    ['Receptions',p=>p.rec,p=>p.rec],
+    ['Rec Yds',p=>p.recYds,p=>p.recYds],
     ['TD',p=>p.rushTd+p.recTd+p.stTd,p=>p.rushTd+p.recTd+p.stTd],
     ['FUM',p=>p.fumbles,p=>p.fumbles],
     ['Tkl',p=>p.tackles,p=>p.tackles],

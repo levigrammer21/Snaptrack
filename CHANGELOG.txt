@@ -1,3 +1,6 @@
+v1.2.4
+- Season Leaders: added sortable Rushes and Receptions columns while keeping rushing and receiving yards.
+
 SnapTrack v1.2.3
 - Season Leaders: removed Snaps from the leaderboard table. Snap tracking remains unchanged everywhere else in the app.
 
